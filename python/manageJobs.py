@@ -227,7 +227,7 @@ def manageJobs(argv=None):
                 args = [a.replace('"','').rstrip() for a in args]
                 # assumption: "-x" argument used for redirector
                 try:
-                    args[args.index("-x")] = options.xrootd
+                    args[args.index("-x")+1] = options.xrootd
                 except:
                     args.extend(["-x",options.xrootd])
                 schedd.edit([j.num],"Args",'"'+" ".join(args[:])+'"')
