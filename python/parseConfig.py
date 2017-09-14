@@ -8,15 +8,11 @@ def list_callback(option, opt, value, parser):
 
 parser = SafeConfigParser()
 
-# first look in current dir, then look in user $HOME (nonexistent files are skipped)
-candidates = [os.path.join(sys.path[0],'.prodconfig'), os.path.expanduser('~/.prodconfig')]
+# first look in this script's dir, then current dir, then user $HOME (nonexistent files are skipped)
+candidates = [os.path.join(sys.path[0],'.prodconfig'), os.path.join(os.getcwd(),'.prodconfig'), os.path.expanduser('~/.prodconfig')]
 
 parser.read(candidates)
 
 # convert to dict
 
 parser_dict = defaultdict(lambda: defaultdict(str),{s:defaultdict(str,parser.items(s)) for s in parser.sections()})
-
-# special case
-if "input" in parser_dict["submit"].keys():
-    parser_dict["submit"]["input"] = parser_dict["submit"]["input"].split(',')
