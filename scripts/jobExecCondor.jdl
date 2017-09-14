@@ -1,0 +1,21 @@
+universe = vanilla
+Executable = jobExecCondor.sh
++REQUIRED_OS = "rhel6"
+request_disk = MYDISK
+request_memory = MYMEMORY
+request_cpus = MYCPUS
+Should_Transfer_Files = YES
+WhenToTransferOutput = ON_EXIT_OR_EVICT
+Transfer_Input_Files = jobExecCondor.sh, SCRIPTARGS, CMSSWVER.tar.gz, EXTRAINPUTS
+Output = JOBNAME_$(Process)_$(Cluster).stdout
+Error = JOBNAME_$(Process)_$(Cluster).stderr
+Log = JOBNAME_$(Process)_$(Cluster).condor
+notification = Never
+x509userproxy = $ENV(X509_USER_PROXY)
+Arguments = -s SCRIPTARGS STEP1ARGS EXTRAARGS
+want_graceful_removal = true
+on_exit_remove = (ExitBySignal == False) && (ExitCode == 0)
+on_exit_hold = ( (ExitBySignal == True) || (ExitCode != 0) )
+on_exit_hold_reason = strcat("Job held by ON_EXIT_HOLD due to ",\
+	ifThenElse((ExitBySignal == True), "exit by signal", \
+strcat("exit code ",ExitCode)), ".")
