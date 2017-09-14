@@ -1,0 +1,42 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+*.pcm
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Other Stuff
+*.d
+*.pyc
+__init__.py
+*~
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Binary files
+*.root
+*.png
+*.zip
+*.eps
+*.tar.gz
