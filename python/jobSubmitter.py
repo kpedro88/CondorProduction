@@ -216,7 +216,7 @@ class jobSubmitter(object):
         else:
             print "No missing jobs!"
             
-    def convertToJobName(self,val):
+    def finishedToJobName(self,val):
         return val.split("/")[-1].replace(".root","")
         
     def findFinished(self):
@@ -228,7 +228,7 @@ class jobSubmitter(object):
             xrd = self.output[:outsplit]
             files = filter(None,os.popen("xrdfs "+xrd+" ls "+lfn).read().split('\n'))
             # basename
-            filesSet = set([ self.convertToJobName(f) for f in files])
+            filesSet = set([ self.finishedToJobName(f) for f in files])
         return filesSet
 
     def tryToGetCondor(self):
@@ -243,6 +243,9 @@ class jobSubmitter(object):
             print 'Could not import htcondor bindings!'
             return False
         return True
+
+    def runningToJobName(self,val):
+        return "_".join(val.replace(".stdout","").split('_')[:-1])
         
     def findRunning(self):
         runSet = set()
@@ -261,7 +264,7 @@ class jobSubmitter(object):
                 scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
                 schedd = htcondor.Schedd(scheddAd)
                 for result in schedd.xquery(constraint,["Out"]):
-                    runSet.add("_".join(result["Out"].replace(".stdout","").split('_')[:-1]))
+                    runSet.add(runningToJobName(result["Out"]))
         
         return runSet
             
