@@ -1,5 +1,5 @@
 import os, subprocess, sys, stat
-from optparse import OptionParser, BadOptionError, AmbiguousOptionError
+from optparse import OptionParser
 from collections import defaultdict
 from parseConfig import list_callback, parser_dict
 
@@ -21,9 +21,10 @@ class protoJob(object):
     def __init__():
         self.patterns = []
         self.appends = []
-        self.queue = []
+        self.queue = ""
         self.njobs = 0
-        self.joblist = []
+        self.nums = []
+        self.names = []
         self.jdl = ""
         self.name = "job"
 
@@ -135,6 +136,11 @@ class jobSubmitter(object):
 
     def generateSubmission(self):
         pass
+        
+    def generatePerJob(self,job):
+        self.generateDefault(self,job)
+        self.generateStep1(self,job)
+        self.generateExtra(self,job)
 
     def initStep1(self):
         # check for grid proxy and tarball
@@ -145,10 +151,10 @@ class jobSubmitter(object):
             sp = subprocess.Popen(cmd, shell=True, stdin = sys.stdin, stdout = sys.stdout, stderr = sys.stderr)
             sp.wait()
         
-    def prepareDefault(self,job):
+    def generateDefault(self,job):
         job.patterns.append(("SCRIPTARGS",",".join(self.scripts)))
 
-    def prepareStep1(self,job):
+    def generateStep1(self,job):
         # command line args for step1
         step1args = "-C "+os.environ("CMSSW_VERSION")
         if self.cmsswMethod != "transfer":
@@ -156,7 +162,7 @@ class jobSubmitter(object):
             step1args += " -L "+(self.input if self.cmsswMethod=="xrdcp" else os.environ("SCRAM_ARCH"))
         job.patterns.append(("STEP1ARGS",step1args))
 
-    def prepareExtra(self,job):
+    def generateExtra(self,job):
         job.patterns.extend([
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
@@ -164,7 +170,7 @@ class jobSubmitter(object):
         ])
         # special option for CMS Connect
         if os.uname()[1]=="login.uscms.org" and len(self.sites)>0:
-            jobs.appends.append("+DESIRED_Sites = \""+options.sites+"\"")
+            job.appends.append("+DESIRED_Sites = \""+options.sites+"\"")
         # left for the user: JOBNAME, EXTRAINPUTS, EXTRAARGS
         
     def doCount(self,job):
@@ -192,8 +198,8 @@ class jobSubmitter(object):
         os.system(cmd)
         
     def doMissing(self,job):
-        self.jobSet.update(job.joblist)
-        for j in job.joblist:
+        self.jobSet.update(job.names)
+        for j in job.names:
             self.jobRef[j] = job
 
     def finishMissing(self):
