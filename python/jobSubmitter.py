@@ -138,6 +138,7 @@ class jobSubmitter(object):
         self.generateDefault(job)
         self.generateStep1(job)
         self.generateExtra(job)
+        self.generateJdl(job)
 
     def initStep1(self):
         # check for grid proxy and tarball
@@ -174,6 +175,9 @@ class jobSubmitter(object):
             job.appends.append("+DESIRED_Sites = \""+options.sites+"\"")
         # left for the user: JOBNAME, EXTRAINPUTS, EXTRAARGS
         
+    def generateJdl(self,job):
+        job.jdl = self.jdl.replace(".jdl","_"+job.name+".jdl")
+        
     def doCount(self,job):
         self.njobs += job.njobs
         
@@ -185,7 +189,6 @@ class jobSubmitter(object):
         if len(self.jdlLines)==0:
             with open(self.jdl,'r') as jdlfile:
                 self.jdlLines = jdlfile.readlines()
-        job.jdl = self.jdl.replace(".jdl","_"+job.name+".jdl")
         # replace patterns
         pysed(self.jdlLines,job.jdl,job.patterns)
         # append appends & queue
