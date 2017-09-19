@@ -3,9 +3,6 @@ from optparse import OptionParser
 from collections import defaultdict
 from parseConfig import list_callback, parser_dict
 
-# todo: check path, try/except, move to where used in missing functionality?
-#import htcondor,classad
-
 # minimal sed-like function
 # patterns = [(in,out),(in,out)]
 # currently doesn't handle regex
@@ -14,11 +11,11 @@ def pysed(lines,out,patterns):
 		for line in lines:
 			linetmp = line
 			for pattern in patterns:
-				linetmp = line.replace(pattern[0],pattern[1])
+				linetmp = linetmp.replace(str(pattern[0]),str(pattern[1]))
 			outfile.write(linetmp)
 
 class protoJob(object):
-    def __init__():
+    def __init__(self):
         self.patterns = []
         self.appends = []
         self.queue = ""
@@ -138,9 +135,9 @@ class jobSubmitter(object):
         pass
         
     def generatePerJob(self,job):
-        self.generateDefault(self,job)
-        self.generateStep1(self,job)
-        self.generateExtra(self,job)
+        self.generateDefault(job)
+        self.generateStep1(job)
+        self.generateExtra(job)
 
     def initStep1(self):
         # check for grid proxy and tarball
@@ -156,11 +153,15 @@ class jobSubmitter(object):
 
     def generateStep1(self,job):
         # command line args for step1
-        step1args = "-C "+os.environ("CMSSW_VERSION")
+        cmsswver = os.getenv("CMSSW_VERSION")
+        step1args = "-C "+cmsswver
         if self.cmsswMethod != "transfer":
             # xrdcp needs input dir, cmsrel needs scram arch
-            step1args += " -L "+(self.input if self.cmsswMethod=="xrdcp" else os.environ("SCRAM_ARCH"))
-        job.patterns.append(("STEP1ARGS",step1args))
+            step1args += " -L "+(self.input if self.cmsswMethod=="xrdcp" else os.getenv("SCRAM_ARCH"))
+        job.patterns.extend([
+            ("CMSSWVER",cmsswver),
+            ("STEP1ARGS",step1args),
+        ])
 
     def generateExtra(self,job):
         job.patterns.extend([
@@ -183,7 +184,7 @@ class jobSubmitter(object):
         # get template contents (move into separate fn/store in self?)
         if len(self.jdlLines)==0:
             with open(self.jdl,'r') as jdlfile:
-                self.jdlLines = jdlfile.read_lines()
+                self.jdlLines = jdlfile.readlines()
         job.jdl = self.jdl.replace(".jdl","_"+job.name+".jdl")
         # replace patterns
         pysed(self.jdlLines,job.jdl,job.patterns)
@@ -216,7 +217,7 @@ class jobSubmitter(object):
         # provide results
         if len(diffList)>0:
             if len(self.resub)>0:
-                makeResubmit(diffList)
+                self.makeResubmit(diffList)
             else:
                 print '\n'.join(diffList)
         else:
@@ -244,6 +245,7 @@ class jobSubmitter(object):
             sys.path.append(condorPath)
         # try to import condor bindings
         try:
+            global htcondor,classad
             import htcondor,classad
         except:
             print 'Could not import htcondor bindings!'
@@ -270,7 +272,7 @@ class jobSubmitter(object):
                 scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
                 schedd = htcondor.Schedd(scheddAd)
                 for result in schedd.xquery(constraint,["Out"]):
-                    runSet.add(runningToJobName(result["Out"]))
+                    runSet.add(self.runningToJobName(result["Out"]))
         
         return runSet
             

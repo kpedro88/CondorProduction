@@ -30,6 +30,7 @@ echo "CMSSWVER: $CMSSWVER"
 if [ -n "$CMSSLOC" ]; then
 	echo "CMSSWLOC: $CMSSWLOC"
 fi
+echo ""
 
 # to get condor-chirp from CMSSW
 export PATH="/usr/libexec/condor:$PATH"

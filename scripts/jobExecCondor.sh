@@ -25,6 +25,7 @@ for SCRIPT in ${SCRIPTARRAY[@]}; do
 		echo ""
 		# pass command line args in case used
 		source $(echo ${SCRIPT})
+		echo ""
 	else
 		echo "Could not find ${SCRIPT}"
 		exit 1
