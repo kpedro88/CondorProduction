@@ -24,6 +24,20 @@ class protoJob(object):
         self.names = []
         self.jdl = ""
         self.name = "job"
+        
+    def __repr__(self):
+        line = (
+            "protoJob:\n"
+            "\tname = "+str(self.name)+"\n"
+            "\tnjobs = "+str(self.njobs)+"\n"
+            "\tjdl = "+str(self.jdl)+"\n"
+            "\tqueue = "+str(self.queue)+"\n"
+            "\tpatterns = "+str(self.patterns)+"\n"
+            "\tappends = "+str(self.appends)+"\n"
+            "\tnums = "+str(self.nums)+"\n"
+            "\tnames = "+str(self.names)
+        )
+        return line
 
 class jobSubmitter(object):
     def __init__(self,argv=None,parser=None):
