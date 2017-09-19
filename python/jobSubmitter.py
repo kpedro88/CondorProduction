@@ -173,10 +173,11 @@ class jobSubmitter(object):
         if self.cmsswMethod != "transfer":
             # xrdcp needs input dir, cmsrel needs scram arch
             step1args += " -L "+(self.input if self.cmsswMethod=="xrdcp" else os.getenv("SCRAM_ARCH"))
-        job.patterns.extend([
-            ("CMSSWVER",cmsswver),
-            ("STEP1ARGS",step1args),
-        ])
+        job.patterns.append(("STEP1ARGS",step1args))
+        if self.cmsswMethod=="transfer":
+            job.patterns.append(("CMSSWVER",cmsswver))
+        else:
+            job.patterns.append(("CMSSWVER.tar.gz, ",""))
 
     def generateExtra(self,job):
         job.patterns.extend([
