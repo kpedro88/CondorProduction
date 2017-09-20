@@ -17,11 +17,10 @@ while [[ $OPTIND -lt $# ]]; do
 		;;
 		L) export CMSSWLOC=$OPTARG
 		;;
+		# keep going if getopts had an error
+		\? | :) OPTIND=$((OPTIND+1))
+		;;
 	esac
-	# keep going if getopts had an error
-	if [[ "$status" -ne 0 ]]; then
-		OPTIND=$((OPTIND+1))
-	fi
 done
 
 echo ""

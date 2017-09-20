@@ -8,11 +8,10 @@ while [[ $OPTIND -lt $# ]]; do
 	case "$opt" in
 		s) export SCRIPTS=$OPTARG
 		;;
+		# keep going if getopts had an error
+		\? | :) OPTIND=$((OPTIND+1))
+		;;
 	esac
-	# keep going if getopts had an error
-	if [[ "$status" -ne 0 ]]; then
-		OPTIND=$((OPTIND+1))
-	fi
 done
 
 IFS="," read -a SCRIPTARRAY <<< "$SCRIPTS"
