@@ -82,12 +82,14 @@ class jobSubmitter(object):
         
         # loop over protojobs
         for job in self.protoJobs:
+            if self.prepare:
+                self.doPrepare(job)
+
+            # mutually exclusive
             if self.count:
                 self.doCount(job)
-            elif self.prepare:
-                self.doPrepare(job)
-                if self.submit:
-                    self.doSubmit(job)
+            elif self.submit:
+                self.doSubmit(job)
             elif self.missing:
                 self.doMissing(job)
         
@@ -100,7 +102,7 @@ class jobSubmitter(object):
         # control options
         parser.add_option("-c", "--count", dest="count", default=False, action="store_true", help="count the expected number of jobs (default = %default)")
         parser.add_option("-p", "--prepare", dest="prepare", default=False, action="store_true", help="prepare job inputs and JDL files (default = %default)")
-        parser.add_option("-s", "--submit", dest="submit", default=False, action="store_true", help="submit jobs to condor once they are configured (default = %default)")
+        parser.add_option("-s", "--submit", dest="submit", default=False, action="store_true", help="submit jobs to condor (default = %default)")
         parser.add_option("-m", "--missing", dest="missing", default=False, action="store_true", help="check for missing jobs (default = %default)")
         parser.add_option("-r", "--resub", dest="resub", default="", help="make a resub script with specified name (default = %default)")
         parser.add_option("-u", "--user", dest="user", default=parser_dict["common"]["user"], help="view jobs from this user (submitter) (default = %default)")
@@ -110,9 +112,6 @@ class jobSubmitter(object):
             parser.error("Options -c, -s, -m are exclusive, pick one!")
         if (options.submit + options.count + options.missing + options.prepare)==0:
             parser.error("No operation mode selected! (-c, -p, -s, -m)")
-        # submit demands prepare
-        if options.submit and not options.prepare:
-            options.prepare = True
 
     # if you use a different step1.sh, you might need to change these
     def addStep1Options(self,parser):
@@ -219,8 +218,11 @@ class jobSubmitter(object):
             outfile.write("# "+job.queue.replace("-queue","Queue")+"\n")
                 
     def doSubmit(self,job):
-        cmd = "condor_submit "+job.jdl+" "+job.queue
-        os.system(cmd)
+        if os.path.isfile(job.jdl):
+            cmd = "condor_submit "+job.jdl+" "+job.queue
+            os.system(cmd)
+        else:
+            print "Error: couldn't find "+job.jdl+", try running in prepare mode"
         
     def doMissing(self,job):
         self.jobSet.update(job.names)
