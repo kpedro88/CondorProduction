@@ -118,6 +118,7 @@ class jobSubmitter(object):
     def addStep1Options(self,parser):
         self.defaultStep1 = True
         parser.add_option("-k", "--keep", dest="keep", default=False, action="store_true", help="keep existing tarball for job submission (default = %default)")
+        parser.add_option("-n", "--no-voms", dest="novoms", default=False, action="store_true", help="skip check and use of voms proxy (default = %default)")
         parser.add_option("-t", "--cmssw-method", dest="cmsswMethod", type="choice", choices=["transfer","xrdcp","cmsrel"], default="transfer", help="how to get CMSSW env: transfer, xrdcp, or cmsrel (default = %default)")
         parser.add_option("-i", "--input", dest="input", default="", help="input dir for CMSSW tarball if using xrdcp (default = %default)")
 
@@ -127,6 +128,8 @@ class jobSubmitter(object):
         # no need to retar if not submitting or not using tarball
         if options.cmsswMethod=="cmsrel" or not options.submit:
             options.keep = True
+        if options.novoms and options.cmsswMethod=="xrdcp":
+            parser.error("Can't xrdcp CMSSW without voms proxy!")
             
     def addExtraOptions(self,parser):
         # job options
@@ -159,6 +162,7 @@ class jobSubmitter(object):
         if self.defaultStep1:
             cmd = "./checkVomsTar.sh"
             if self.keep: cmd += " -k"
+            if self.novoms: cmd += " -n"
             if not self.keep and self.cmsswMethod=="xrdcp": cmd += " -i "+self.input
             sp = subprocess.Popen(cmd, shell=True, stdin = sys.stdin, stdout = sys.stdout, stderr = sys.stderr)
             sp.wait()
@@ -178,6 +182,8 @@ class jobSubmitter(object):
             job.patterns.append(("CMSSWVER",cmsswver))
         else:
             job.patterns.append(("CMSSWVER.tar.gz, ",""))
+        if self.novoms:
+            job.patterns.append(("x509userproxy = $ENV(X509_USER_PROXY)\n",""))
 
     def generateExtra(self,job):
         job.patterns.extend([

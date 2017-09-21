@@ -2,18 +2,21 @@
 
 KEEPTAR=""
 XRDIR=""
+NOVOMS=""
 # check arguments
-while getopts "ki:" opt; do
+while getopts "nki:" opt; do
 	case "$opt" in
 		k) KEEPTAR="keep"
 		;;
 		i) XRDIR=$OPTARG
 		;;
+		n) NOVOMS=true
+		;;
 	esac
 done
 
 # grid proxy existence & expiration check
-if ! voms-proxy-info -exists ; then
+if [ -z "$NOVOMS" ] && ! voms-proxy-info -exists; then
 	voms-proxy-init -voms cms --valid 168:00
 fi
 
