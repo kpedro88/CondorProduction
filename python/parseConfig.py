@@ -1,4 +1,4 @@
-import os, sys
+import os, inspect
 from ConfigParser import SafeConfigParser
 from collections import defaultdict
 
@@ -9,7 +9,8 @@ def list_callback(option, opt, value, parser):
 parser = SafeConfigParser()
 
 # first look in this script's dir, then current dir, then user $HOME (nonexistent files are skipped)
-candidates = [os.path.join(sys.path[0],'.prodconfig'), os.path.join(os.getcwd(),'.prodconfig'), os.path.expanduser('~/.prodconfig')]
+mypath = inspect.getsourcefile(list_callback).replace("parseConfig.py","")
+candidates = [os.path.join(mypath,'.prodconfig'), os.path.join(os.getcwd(),'.prodconfig'), os.path.expanduser('~/.prodconfig')]
 
 parser.read(candidates)
 
