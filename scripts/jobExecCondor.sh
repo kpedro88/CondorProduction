@@ -4,9 +4,9 @@
 export SCRIPTS=""
 while [[ $OPTIND -lt $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":s:" opt || status=$?
+	getopts ":S:" opt || status=$?
 	case "$opt" in
-		s) export SCRIPTS=$OPTARG
+		S) export SCRIPTS=$OPTARG
 		;;
 		# keep going if getopts had an error
 		\? | :) OPTIND=$((OPTIND+1))
