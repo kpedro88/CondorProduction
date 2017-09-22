@@ -1,7 +1,3 @@
-[manage]
-dir = .
-[submit]
-input = 2016B,2016C,2016D,2016E,2016F,2016G,2016H,sig,qcd,wjets,ttbar,dyjets,zjets,gjets,singlet,diboson,tth,fast
 [collectors]
 fnal = cmssrv208.fnal.gov,cmssrv223.fnal.gov
 cmscon = login.uscms.org
