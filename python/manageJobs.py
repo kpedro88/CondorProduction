@@ -95,7 +95,7 @@ def manageJobs(argv=None):
     parser.add_option("-i", "--idle", dest="idle", default=False, action="store_true", help="view only idle jobs (default = %default)")
     parser.add_option("-t", "--stuck", dest="stuck", default=False, action="store_true", help="view only stuck jobs (subset of running) (default = %default)")
     parser.add_option("-g", "--grep", dest="grep", default=[], type="string", action="callback", callback=list_callback, help="view jobs with [comma-separated list of strings] in the job name or hold reason (default = %default)")
-    parser.add_option("-v", "--vgrep", dest="vgrep", default=[], type="string", action="callback", callback=list_callback, help="view jobs without [comma-separated list of string] in the job name or hold reason (default = %default)")
+    parser.add_option("-v", "--vgrep", dest="vgrep", default=[], type="string", action="callback", callback=list_callback, help="view jobs without [comma-separated list of strings] in the job name or hold reason (default = %default)")
     parser.add_option("-o", "--stdout", dest="stdout", default=False, action="store_true", help="print stdout filenames instead of job names (default = %default)")
     parser.add_option("-n", "--num", dest="num", default=False, action="store_true", help="print job numbers along with names (default = %default)")
     parser.add_option("-x", "--xrootd", dest="xrootd", default="", help="edit the xrootd redirector of the job (default = %default)")
@@ -119,7 +119,7 @@ def manageJobs(argv=None):
     # check for exclusive options
     if options.stuck:
         options.running = True
-    if options.held and (options.running or options.idle) or (options.running and options.idle):
+    if (options.held + options.running + options.idle)>1:
         parser.error("Options -h, -r, -i are exclusive, pick one!")
     if options.resubmit and options.kill:
         parser.error("Can't use -s and -k together, pick one!")
