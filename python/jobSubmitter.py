@@ -289,12 +289,15 @@ class jobSubmitter(object):
             print '"Missing jobs" check will not consider running jobs.'
             return runSet
         
-        from collectors import collectors
         constraint = ""
         if len(self.user)>0: constraint += 'Owner=="'+self.user+'"'
-        for collector in collectors:
-            coll = htcondor.Collector(collector[0])
-            for sch in collector[1]:
+        for cname, collector in parser_dict["collectors"].iteritems():
+            if len(collector)==0: continue
+            if cname not in parser_dict["schedds"]:
+                print "Error: no schedds provided for collector "+cname+", so it will be skipped."
+            else:
+                coll = htcondor.Collector(collector)
+            for sch in parser_dict["schedds"][cname].split(','):
                 scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
                 schedd = htcondor.Schedd(scheddAd)
                 for result in schedd.xquery(constraint,["Out"]):

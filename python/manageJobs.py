@@ -17,7 +17,6 @@ try:
 except:
     has_paramiko = False
 
-from collectors import collectors
 from parseConfig import list_callback, parser_dict
 
 class CondorJob(object):
@@ -130,13 +129,13 @@ def manageJobs(argv=None):
         parser.error("Improper xrootd address: "+options.xrootd)
     if len(options.xrootd)>0 and options.xrootd[-1]!='/':
         options.xrootd += '/'
-    if options.ssh or uname[1]=="login.uscms.org": # sometimes "all" shouldn't be used
+    if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
         options.all = False
         
     jobs = []
     if options.all:
         # loop over schedulers
-        all_nodes = collectors[0][1]
+        all_nodes = parser_dict["collectors"]["fnal"]
         for sch in all_nodes:
             jobs_tmp = getJobs(options,sch)
             if len(jobs_tmp)>0:
