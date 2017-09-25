@@ -7,6 +7,29 @@ or [CMS Connect](https://connect.uscms.org/).
 
 Currently in a pre-alpha state of development; caveat emptor.
 
+Table of Contents
+=================
+
+* [Installation](#installation)
+* [Job submission](#job-submission)
+   * [Modes of operation](#modes-of-operation)
+      * [Job prototypes](#job-prototypes)
+      * [Count mode](#count-mode)
+      * [Prepare mode](#prepare-mode)
+      * [Submit mode](#submit-mode)
+      * [Missing mode](#missing-mode)
+   * [Job steps](#job-steps)
+      * [Step1](#step1)
+         * [CMSSW tarball creation](#cmssw-tarball-creation)
+      * [Step2 and beyond](#step2-and-beyond)
+   * [Summary of options](#summary-of-options)
+   * [Examples](#examples)
+* [Job management](#job-management)
+* [Configuration](#configuration)
+* [Dependencies](#dependencies)
+
+(Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc))
+
 ## Installation
 
 This recipe assumes the use of CMSSW. This repository is treated as a CMSSW package,
