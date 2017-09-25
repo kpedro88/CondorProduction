@@ -75,7 +75,7 @@ Internally, `jobSubmitter` stores job information in a list `protoJobs`, where e
 This mode simply counts the number of jobs expected. This is useful if testing some automatic job splitting algorithm
 or other criteria to add or remove jobs from a list, or just trying to plan a large submission of jobs.
 
-### Prepare mode
+#### Prepare mode
 
 This mode creates JDL files from the template file (by default, [jobExecCondor.jdl](./scripts/jobExecCondor.jdl)).
 It uses the `patterns` specified in each `protoJob` to perform find-replace operations on the template file
@@ -173,6 +173,7 @@ One shell argument is effectively reserved if the user wants to use the [job man
 
 <details>
 <summary>Python</summary>
+
 "Mode of operation" options:
 * `-c, --count`: count the expected number of jobs to submit
 * `-p, --prepare`: prepare JDL file(s) and any associated job inputs
@@ -201,6 +202,7 @@ Default extra options:
 
 <details>
 <summary>Shell</summary>
+
 "Mode of operation" options:
 * `-S`: comma-separated list of subroutine scripts to run
 
