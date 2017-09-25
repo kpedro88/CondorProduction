@@ -5,7 +5,7 @@ A general, extensible set of Python and Bash scripts to submit any job to the [H
 This package focuses on the use of Condor with [CMSSW](http://cms-sw.github.io/) via the [LPC](https://lpc.fnal.gov/computing/index.shtml)
 or [CMS Connect](https://connect.uscms.org/).
 
-Currently in a pre-alpha state of development; caveat emptor.
+Currently in an alpha state of development; caveat emptor.
 
 Table of Contents
 =================
