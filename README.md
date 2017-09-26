@@ -90,7 +90,7 @@ Internally, `jobSubmitter` stores job information in a list `protoJobs`, where e
 * `njobs`: total number of jobs (used in [count mode](#count-mode))
 * `jdl`: JDL filename for this set of jobs
 * `queue`: queue command for this set of jobs
-* `patterns`: list of find/replace pairs to create the JDL from template
+* `patterns`: `OrderedDict` of find/replace pairs to create the JDL from template
 * `appends`: list of strings to append to the JDL
 
 #### Count mode

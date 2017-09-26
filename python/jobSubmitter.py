@@ -1,6 +1,6 @@
 import os, subprocess, sys, stat
 from optparse import OptionParser
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from parseConfig import list_callback, parser_dict
 
 # minimal sed-like function
@@ -10,13 +10,13 @@ def pysed(lines,out,patterns):
 	with open(out,'w') as outfile:
 		for line in lines:
 			linetmp = line
-			for pattern in patterns:
-				linetmp = linetmp.replace(str(pattern[0]),str(pattern[1]))
+			for pattern,replace in patterns.iteritems():
+				linetmp = linetmp.replace(str(pattern),str(replace))
 			outfile.write(linetmp)
 
 class protoJob(object):
     def __init__(self):
-        self.patterns = []
+        self.patterns = OrderedDict()
         self.appends = []
         self.queue = ""
         self.njobs = 0
@@ -167,7 +167,7 @@ class jobSubmitter(object):
             sp.wait()
         
     def generateDefault(self,job):
-        job.patterns.append(("SCRIPTARGS",",".join(self.scripts)))
+        job.patterns["SCRIPTARGS"] = ",".join(self.scripts)
 
     def generateStep1(self,job):
         # command line args for step1
@@ -176,16 +176,16 @@ class jobSubmitter(object):
         if self.cmsswMethod != "transfer":
             # xrdcp needs input dir, cmsrel needs scram arch
             step1args += " -L "+(self.input if self.cmsswMethod=="xrdcp" else os.getenv("SCRAM_ARCH"))
-        job.patterns.append(("STEP1ARGS",step1args))
+        job.patterns["STEP1ARGS"] = step1args
         if self.cmsswMethod=="transfer":
-            job.patterns.append(("CMSSWVER",cmsswver))
+            job.patterns["CMSSWVER"] = cmsswver
         else:
-            job.patterns.append(("CMSSWVER.tar.gz, ",""))
+            job.patterns["CMSSWVER.tar.gz, "] = ""
         if self.novoms:
-            job.patterns.append(("x509userproxy = $ENV(X509_USER_PROXY)\n",""))
+            job.patterns["x509userproxy = $ENV(X509_USER_PROXY)\n"] = ""
 
     def generateExtra(self,job):
-        job.patterns.extend([
+        job.patterns.update([
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
             ("MYCPUS",self.cpus),
