@@ -172,7 +172,9 @@ The arguments for the default [step1.sh](./scripts/step1.sh) are:
 The tar command (in [checkVomsTar.sh](./scripts/checkVomsTar.sh)) uses flags `--exclude-vcs` and `--exclude-caches-all` to reduce the size of the CMSSW tarball.
 The first flag, `--exclude-vcs`, drops directories like `.git` that may be large but don't contain any useful information for jobs.
 The second flag, `--exclude-caches-all`, drops any directory containing a [CACHEDIR.TAG](http://www.brynosaurus.com/cachedir/spec.html) file.
-The user should place [CACHEDIR.TAG](http://www.brynosaurus.com/cachedir/spec.html) files in any large, unneeded directory.
+
+A script [cacheAll.py](./python/cacheAll.py) is provided to expedite the process of using `CACHEDIR.TAG` files.
+Directories to cache (or uncache) can be specified in `.prodconfig`. Environment variables used in the directory names will be expanded.
 
 #### Step2 and beyond
 
@@ -298,6 +300,8 @@ Expected categories and values:
     * `[name] = [server(s)]`: name and associated collector server(s) (comma-separated list)
 * `schedds`:
     * `[name] = [server(s)]`: name and associated schedd server(s) (comma-separated list)
+* `caches`:
+	* `[dir] = [val]`: directory and cache status (1 = cache, 0 = uncache) (one entry per directory)
 
 The name used for the collector and associated schedd(s) must match.
 
