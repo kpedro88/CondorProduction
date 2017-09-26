@@ -190,6 +190,7 @@ Some default Python arguments are provided in case the user is using the default
 A few other Python arguments are not explicitly included in the default setup, but may often be added by users:
 * `-o, --output [dir]`: path to output directory
 * `-v, --verbose`: enable verbose output (could be a bool or an int, if different verbosity levels are desired)
+By default, missing mode will try to get a list of output files from the `output` option, if it exists.
 
 One shell argument is effectively reserved if the user wants to use the [job management](#job-management) tools:
 * `-x [redir]`: xrootd redirector address (for reading input files)
