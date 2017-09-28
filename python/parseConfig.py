@@ -7,6 +7,7 @@ def list_callback(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
 
 parser = SafeConfigParser()
+# avoid converting input to lowercase
 parser.optionxform = str
 
 # first look in this script's dir, then current dir, then user $HOME (nonexistent files are skipped)
