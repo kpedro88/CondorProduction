@@ -246,6 +246,7 @@ none
 ### Examples
 
 * [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
+* [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
 
 ## Job management
 
