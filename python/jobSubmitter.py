@@ -298,10 +298,13 @@ class jobSubmitter(object):
             else:
                 coll = htcondor.Collector(collector)
             for sch in parser_dict["schedds"][cname].split(','):
-                scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
-                schedd = htcondor.Schedd(scheddAd)
-                for result in schedd.xquery(constraint,["Out"]):
-                    runSet.add(self.runningToJobName(result["Out"]))
+                try:
+                    scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
+                    schedd = htcondor.Schedd(scheddAd)
+                    for result in schedd.xquery(constraint,["Out"]):
+                        runSet.add(self.runningToJobName(result["Out"]))
+                except:
+                    print "Warning: could not locate schedd "+sch
         
         return runSet
             
