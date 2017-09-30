@@ -135,7 +135,7 @@ def manageJobs(argv=None):
     jobs = []
     if options.all:
         # loop over schedulers
-        all_nodes = parser_dict["collectors"]["fnal"]
+        all_nodes = parser_dict["schedds"]["fnal"].split(',')
         for sch in all_nodes:
             jobs_tmp = getJobs(options,sch)
             if len(jobs_tmp)>0:
