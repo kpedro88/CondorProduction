@@ -39,10 +39,14 @@ def getJobs(options, scheddurl=""):
     elif options.idle: constraint += ' && JobStatus==1'
 
     if len(scheddurl)>0:
-        if len(options.coll)>0: coll = htcondor.Collector(options.coll)
-        else: coll = htcondor.Collector() # defaults to local
-        scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, scheddurl)
-        schedd = htcondor.Schedd(scheddAd)
+        try:
+            if len(options.coll)>0: coll = htcondor.Collector(options.coll)
+            else: coll = htcondor.Collector() # defaults to local
+            scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, scheddurl)
+            schedd = htcondor.Schedd(scheddAd)
+        except:
+            print "Warning: could not locate schedd "+scheddurl
+            return []
     else:
         schedd = htcondor.Schedd() # defaults to local
 
