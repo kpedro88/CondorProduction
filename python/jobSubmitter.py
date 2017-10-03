@@ -82,22 +82,29 @@ class jobSubmitter(object):
         
         # loop over protojobs
         for job in self.protoJobs:
-            if self.prepare:
-                self.doPrepare(job)
+            self.runPerJob()
 
-            # mutually exclusive
-            if self.count:
-                self.doCount(job)
-            elif self.submit:
-                self.doSubmit(job)
-            elif self.missing:
-                self.doMissing(job)
-        
+        # final stuff
+        self.finishRun()
+
+    def runPerJob(self):
+        if self.prepare:
+            self.doPrepare(job)
+
+        # mutually exclusive
+        if self.count:
+            self.doCount(job)
+        elif self.submit:
+            self.doSubmit(job)
+        elif self.missing:
+            self.doMissing(job)
+            
+    def finishRun(self):
         if self.count:
             self.finishCount()
         elif self.missing:
-            self.finishMissing()
-
+            self.finishMissing()        
+            
     def addDefaultOptions(self,parser):
         # control options
         parser.add_option("-c", "--count", dest="count", default=False, action="store_true", help="count the expected number of jobs (default = %default)")
