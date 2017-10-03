@@ -21,7 +21,6 @@ class protoJob(object):
         self.queue = ""
         self.njobs = 0
         self.nums = []
-        self.names = []
         self.jdl = ""
         self.name = "job"
         
@@ -34,10 +33,12 @@ class protoJob(object):
             "\tqueue = "+str(self.queue)+"\n"
             "\tpatterns = "+str(self.patterns)+"\n"
             "\tappends = "+str(self.appends)+"\n"
-            "\tnums = "+str(self.nums)+"\n"
-            "\tnames = "+str(self.names)
+            "\tnums = "+str(self.nums)
         )
         return line
+        
+    def makeName(self,num):
+        return self.name+"_"+str(num)
 
 class jobSubmitter(object):
     def __init__(self,argv=None,parser=None):
@@ -71,23 +72,29 @@ class jobSubmitter(object):
         self.protoJobs = []
         self.jdlLines = []
         self.njobs = 0
-        self.jobSet = set()
-        self.jobRef = {}
+        self.filesSet = set()
+        self.runSet = set()
+        self.missingLines = []
 
     def run(self):
-        self.initStep1()
-            
+        self.initRun()
+        
         # job generation
         self.generateSubmission()
         
         # loop over protojobs
         for job in self.protoJobs:
-            self.runPerJob()
+            self.runPerJob(job)
 
         # final stuff
         self.finishRun()
 
-    def runPerJob(self):
+    def initRun(self):
+        self.initStep1()
+        if self.missing:
+            self.initMissing()
+        
+    def runPerJob(self,job):
         if self.prepare:
             self.doPrepare(job)
 
@@ -172,6 +179,13 @@ class jobSubmitter(object):
             if not self.keep and self.cmsswMethod=="xrdcp": cmd += " -i "+self.input
             sp = subprocess.Popen(cmd, shell=True, stdin = sys.stdin, stdout = sys.stdout, stderr = sys.stderr)
             sp.wait()
+            
+    def initMissing(self):
+        # find finished jobs via output file list
+        self.filesSet = self.findFinished()
+            
+        # find running jobs from condor
+        self.runSet = self.findRunning()
         
     def generateDefault(self,job):
         job.patterns["SCRIPTARGS"] = ",".join(self.scripts)
@@ -232,27 +246,33 @@ class jobSubmitter(object):
             print "Error: couldn't find "+job.jdl+", try running in prepare mode"
         
     def doMissing(self,job):
-        self.jobSet.update(job.names)
-        for j in job.names:
-            self.jobRef[j] = job
-
-    def finishMissing(self):
-        # find finished jobs via output file list
-        filesSet = self.findFinished()
-            
-        # find running jobs from condor
-        runSet = self.findRunning()
-
+        jobSet, jobDict = self.findJobs(job)
         # find difference
-        diffSet = self.jobSet - filesSet - runSet
+        diffSet = jobSet - self.filesSet - self.runSet
         diffList = list(sorted(diffSet))
-        
-        # provide results
         if len(diffList)>0:
             if len(self.resub)>0:
-                self.makeResubmit(diffList)
+                numlist = sorted([jobDict[j] for j in diffList])
+                self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(numlist)+'\n')
             else:
-                print '\n'.join(diffList)
+                self.missingLines.extend(diffList)
+
+    def findJobs(self,job):
+        jobSet = set()
+        jobDict = {}
+        for num in job.nums:
+            name = job.makeName(num)
+            jobSet.add(name)
+            jobDict[name] = num
+        return (jobSet, jobDict)
+                
+    def finishMissing(self):
+        # provide results
+        if len(self.missingLines)>0:
+            if len(self.resub)>0:
+                self.makeResubmit()
+            else:
+                print '\n'.join(self.missingLines)
         else:
             print "No missing jobs!"
             
@@ -315,16 +335,11 @@ class jobSubmitter(object):
         
         return runSet
             
-    def makeResubmit(self,diffList):
+    def makeResubmit(self):
         with open(self.resub,'w') as rfile:
             rfile.write("#!/bin/bash\n\n")
-            diffDict = defaultdict(list)
-            for dtmp in diffList:
-                stmp = self.jobRef[dtmp].jdl
-                ntmp = dtmp.split('_')[-1]
-                diffDict[stmp].append(ntmp)
-            for stmp in sorted(diffDict):
-                rfile.write('condor_submit '+stmp+' -queue Process in '+','.join(diffDict[stmp])+'\n')
+            for stmp in self.missingLines:
+                rfile.write(stmp+'\n')
         # make executable
         st = os.stat(rfile.name)
         os.chmod(rfile.name, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)            
