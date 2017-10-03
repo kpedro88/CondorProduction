@@ -85,13 +85,21 @@ At least one mode must be specified to run the script.
 
 Internally, `jobSubmitter` stores job information in a list `protoJobs`, where each entry is an instance of the class `protoJob`:
 * `name`: base name for the set of jobs (see [submit mode](#submit-mode))
-* `names`: list of all job names in this set
 * `nums`: list of job numbers in this set (i.e. `$(Process)` values)
 * `njobs`: total number of jobs (used in [count mode](#count-mode))
 * `jdl`: JDL filename for this set of jobs
 * `queue`: queue command for this set of jobs
 * `patterns`: `OrderedDict` of find/replace pairs to create the JDL from template
 * `appends`: list of strings to append to the JDL
+
+The `protoJob` class also has a function `makeName(num)` to make an individual job name by combining the job base name and a given job number.
+This function is important to match job names with finished or running jobs in [missing mode](#missing-mode), and may also be used for other purposes.
+The user can override this function if desired:
+```
+def makeNameNew(self,num):
+    ...
+protoJob.makeName = makeNameNew
+```
 
 #### Count mode
 
