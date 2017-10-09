@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 echo "Starting job on "`date` # to display the start date
 echo "Running on "`uname -a` # to display the machine where the job is running
@@ -11,7 +11,7 @@ export CMSSWLOC=""
 export OPTIND=1
 while [[ $OPTIND -lt $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":C:L:" opt || status=$?
+	getopts ":C:L:" opt
 	case "$opt" in
 		C) export CMSSWVER=$OPTARG
 		;;

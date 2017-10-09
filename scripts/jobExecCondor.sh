@@ -1,10 +1,10 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # check default arguments
 export SCRIPTS=""
 while [[ $OPTIND -lt $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":S:" opt || status=$?
+	getopts ":S:" opt
 	case "$opt" in
 		S) export SCRIPTS=$OPTARG
 		;;
