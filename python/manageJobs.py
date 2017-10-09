@@ -32,8 +32,7 @@ class CondorJob(object):
         if self.sites==classad.Value.Undefined: self.sites = ""
 
 def getJobs(options, scheddurl=""):
-    constraint = ""
-    if len(options.user)>0: constraint += 'Owner=="'+options.user+'"'
+    constraint = 'Owner=="'+options.user+'"'
     if options.held: constraint += ' && JobStatus==5'
     elif options.running: constraint += ' && JobStatus==2'
     elif options.idle: constraint += ' && JobStatus==1'
@@ -131,6 +130,8 @@ def manageJobs(argv=None):
         parser.error("Can't use job modification options (-s, -k) with -a without paramiko and gssapi.")
     if len(options.xrootd)>0 and options.xrootd[0:7] != "root://":
         parser.error("Improper xrootd address: "+options.xrootd)
+    if len(options.user)==0:
+        parser.error("Must specify a user")
     if len(options.xrootd)>0 and options.xrootd[-1]!='/':
         options.xrootd += '/'
     if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
