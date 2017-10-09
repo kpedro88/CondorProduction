@@ -294,10 +294,10 @@ on that node (because each scheduler can only be accessed for write operations f
 
 Both job submission and management can be configured by a shared config file called `.prodconfig`.
 A [default version](./python/.prodconfig) is provided in this repository. It is parsed by [parseConfig.py](./python/parseConfig.py)
-using the Python ConfigParser. The config parsing looks for, in order (later files supersede earlier ones):
-* `.prodconfig` from this repository
-* `.prodconfig` from current directory (e.g. user's job submission directory)
-* `.prodconfig` from user's home area
+using the Python ConfigParser. The config parsing looks for `.prodconfig` in the following locations, in order (later files supersede earlier ones):
+1. `.prodconfig` from this repository
+2. `.prodconfig` from current directory (e.g. user's job submission directory)
+3. `.prodconfig` from user's home area
 
 Expected categories and values:
 * `common`
@@ -314,6 +314,9 @@ Expected categories and values:
 	* `[dir] = [val]`: directory and cache status (1 = cache, 0 = uncache) (one entry per directory)
 
 The name used for the collector and associated schedd(s) must match.
+
+(Limitation: if the log backup directory is specified in the `.prodconfig` file in location 2,
+`manageJobs.py` must be run in location 2 in order to use the specified backup directory.)
 
 ## Dependencies
 
