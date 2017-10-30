@@ -252,7 +252,7 @@ class jobSubmitter(object):
         diffList = list(sorted(diffSet))
         if len(diffList)>0:
             if len(self.resub)>0:
-                numlist = sorted([jobDict[j] for j in diffList])
+                numlist = sorted([str(jobDict[j]) for j in diffList])
                 self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(numlist)+'\n')
             else:
                 self.missingLines.extend(diffList)
