@@ -46,8 +46,11 @@ For simplicity, in the typical case where the user is reusing any of the scripts
 directory, go to the directory where jobs will be submitted and link to those scripts:
 ```
 cd [job_dir]
-ln -s $CMSSW_BASE/src/Condor/Production/scripts/* .
+python $CMSSW_BASE/src/Condor/Production/python linkScripts.py
 ```
+In case of a non-standard installation, the user can provide the source directory for the scripts using
+the `-d, --dir` argument to `linkScripts.py`. The list of scripts to be linked is set in the `.prodconfig` file (see [Configuration](#configuration)).
+
 If the job directory is tracked in git, one can add the symlinked file names to a `.gitignore` file in the directory
 to exclude them from the repository.
 
@@ -302,6 +305,7 @@ using the Python ConfigParser. The config parsing looks for `.prodconfig` in the
 Expected categories and values:
 * `common`
     * `user = [username]`: typically specified in user's home area
+    * `scripts = [script(s)]`: list of scripts to link from this repository to user job directory (comma-separated list)
 * `submit`
     * nothing expected by default; can be extended by user
 * `manage`:
@@ -315,10 +319,14 @@ Expected categories and values:
 
 The name used for the collector and associated schedd(s) must match.
 
-(Limitation: if the log backup directory is specified in the `.prodconfig` file in location 2,
-`manageJobs.py` must be run in location 2 in order to use the specified backup directory.)
+Limitation: if information for Python scripts used directly from this repository is specified in the `.prodconfig` file in location 2
+(user job directory), the associated Python script must be run from location 2 in order to pick up the specified information. Current cases:
+* log backup directory for `manageJobs.py`
+* list of scripts for `linkScripts.py`
 
 ## Dependencies
+
+This repository works with Python 2.7 and any modern version of bash (4+).
 
 The missing mode of `jobSubmitter` uses the [Condor python bindings](https://htcondor-python.readthedocs.io/en/latest/htcondor_intro.html)
 to check the list of running jobs. It will try very hard to find the Condor python bindings, but if they are not available,

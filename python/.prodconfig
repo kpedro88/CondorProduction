@@ -1,3 +1,5 @@
+[common]
+scripts = checkVomsTar.sh,jobExecCondor.jdl,jobExecCondor.sh,step1.sh
 [collectors]
 fnal = cmssrv208.fnal.gov,cmssrv223.fnal.gov
 cmscon = login.uscms.org
