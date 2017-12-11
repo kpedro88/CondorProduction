@@ -101,7 +101,7 @@ def manageJobs(argv=None):
     parser.add_option("-v", "--vgrep", dest="vgrep", default=[], type="string", action="callback", callback=list_callback, help="view jobs without [comma-separated list of strings] in the job name or hold reason (default = %default)")
     parser.add_option("-o", "--stdout", dest="stdout", default=False, action="store_true", help="print stdout filenames instead of job names (default = %default)")
     parser.add_option("-n", "--num", dest="num", default=False, action="store_true", help="print job numbers along with names (default = %default)")
-    parser.add_option("-x", "--xrootd", dest="xrootd", default="", help="edit the xrootd redirector of the job (default = %default)")
+    parser.add_option("-x", "--xrootd", dest="xrootd", default="", help="edit the xrootd redirector (or site name) of the job input (default = %default)")
     parser.add_option("-e", "--edit", dest="edit", default="", help="edit the ClassAds of the job (JSON dict format) (default = %default)")
     parser.add_option("-s", "--resubmit", dest="resubmit", default=False, action="store_true", help="resubmit the selected jobs (default = %default)")
     parser.add_option("-k", "--kill", dest="kill", default=False, action="store_true", help="remove the selected jobs (default = %default)")
@@ -128,11 +128,11 @@ def manageJobs(argv=None):
         parser.error("Can't use -s and -k together, pick one!")
     if options.all and not has_paramiko and (options.kill or options.resubmit):
         parser.error("Can't use job modification options (-s, -k) with -a without paramiko and gssapi.")
-    if len(options.xrootd)>0 and options.xrootd[0:7] != "root://":
+    if len(options.xrootd)>0 and options.xrootd[0:7] != "root://" and options.xrootd[0] != "T":
         parser.error("Improper xrootd address: "+options.xrootd)
     if len(options.user)==0:
         parser.error("Must specify a user")
-    if len(options.xrootd)>0 and options.xrootd[-1]!='/':
+    if len(options.xrootd)>0 and options.xrootd[-1] != '/' and options.xrootd[0] != "T":
         options.xrootd += '/'
     if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
         options.all = False

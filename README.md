@@ -206,7 +206,7 @@ A few other Python arguments are not explicitly included in the default setup, b
 By default, missing mode will try to get a list of output files from the `output` option, if it exists.
 
 One shell argument is effectively reserved if the user wants to use the [job management](#job-management) tools:
-* `-x [redir]`: xrootd redirector address (for reading input files)
+* `-x [redir]`: xrootd redirector address or site name (for reading input files)
 
 ### Summary of options
 
@@ -253,7 +253,7 @@ Default extra options:
 none
 
 "Reserved", but not actually used by default:
-* `-x [redir]`: xrootd redirector address (for reading input files)
+* `-x [redir]`: xrootd redirector address or site name (for reading input files)
 </details>
 
 ### Examples
@@ -280,7 +280,7 @@ It uses a number of command line options to specify how to display job informati
 * `-v, --vgrep [patterns]`: view jobs without [comma-separated list of strings] in the job name or hold reason
 * `-o, --stdout`: print stdout filenames instead of job names
 * `-n, --num`: print job numbers along with names
-* `-x, --xrootd [redir]`: edit the xrootd redirector of the job
+* `-x, --xrootd [redir]`: edit the xrootd redirector (or site name) of the job input
 * `-e, --edit [edit]`: edit the ClassAds of the job (JSON dict format)
 * `-s, --resubmit`: resubmit (release) the selected jobs
 * `-k, --kill`: remove the selected jobs
