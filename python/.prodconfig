@@ -8,3 +8,5 @@ fnal = cmslpc23.fnal.gov,cmslpc24.fnal.gov,cmslpc25.fnal.gov,cmslpc26.fnal.gov,c
 cmscon = login.uscms.org
 [caches]
 $CMSSW_BASE/tmp = 1
+[manage]
+defaultredir = root://cmsxrootd.fnal.gov/

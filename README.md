@@ -312,6 +312,7 @@ Expected categories and values:
     * nothing expected by default; can be extended by user
 * `manage`:
     * `dir = [dir]`: backup directory for logs from failing jobs
+    * `defaultredir = [dir]`: default xrootd redirector (if using site name)
 * `collectors`:
     * `[name] = [server(s)]`: name and associated collector server(s) (comma-separated list)
 * `schedds`:

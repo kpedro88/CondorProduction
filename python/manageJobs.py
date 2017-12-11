@@ -132,8 +132,15 @@ def manageJobs(argv=None):
         parser.error("Improper xrootd address: "+options.xrootd)
     if len(options.user)==0:
         parser.error("Must specify a user")
-    if len(options.xrootd)>0 and options.xrootd[-1] != '/' and options.xrootd[0] != "T":
-        options.xrootd += '/'
+    if len(options.xrootd)>0:
+        sitename = ""
+        if options.xrootd[0] == "T":
+            sitename = options.xrootd
+            options.xrootd = parser_dict["manage"]["defaultredir"]
+        if options.xrootd[-1] != '/':
+            options.xrootd += '/'
+        if len(sitename)>0:
+            options.xrootd = options.xrootd+"/store/test/xrootd/"+sitename
     if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
         options.all = False
         
