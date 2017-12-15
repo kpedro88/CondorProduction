@@ -213,7 +213,7 @@ class jobSubmitter(object):
         ])
         # special option for CMS Connect
         if os.uname()[1]=="login.uscms.org" and len(self.sites)>0:
-            job.appends.append("+DESIRED_Sites = \""+options.sites+"\"")
+            job.appends.append("+DESIRED_Sites = \""+self.sites+"\"")
         # left for the user: JOBNAME, EXTRAINPUTS, EXTRAARGS
         
     def generateJdl(self,job):
