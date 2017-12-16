@@ -30,6 +30,11 @@ class CondorJob(object):
         self.status = int(result["JobStatus"]) # 2 is running, 5 is held, 1 is idle
         self.sites = result["DESIRED_Sites"] if "DESIRED_Sites" in result.keys() else ""
         if self.sites==classad.Value.Undefined: self.sites = ""
+        self.matched = result["MATCH_EXP_JOB_GLIDEIN_CMSSite"] if "MATCH_EXP_JOB_GLIDEIN_CMSSite" in result.keys() else ""
+        if self.matched==classad.Value.Undefined: self.matched = ""
+        self.machine = result["LastRemoteHost"] if "LastRemoteHost" in result.keys() else ""
+        if self.machine==classad.Value.Undefined: self.matched = ""
+        if len(self.machine)>0: self.machine = self.machine.split('@')[-1]
 
 def getJobs(options, scheddurl=""):
     constraint = 'Owner=="'+options.user+'"'
@@ -51,7 +56,7 @@ def getJobs(options, scheddurl=""):
 
     # get info for selected jobs
     jobs = []
-    for result in schedd.xquery(constraint,["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","DESIRED_Sites"]):
+    for result in schedd.xquery(constraint,["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","LastRemoteHost"]):
         # check greps
         checkstring = result["Out"]
         if "HoldReason" in result.keys(): checkstring += " "+result["HoldReason"]
@@ -78,13 +83,16 @@ def getJobs(options, scheddurl=""):
 
     return jobs
 
-def printJobs(jobs, num=False, stdout=False, why=False):
+def printJobs(jobs, num=False, stdout=False, why=False, matched=False):
     if len(jobs)==0: return
     
-    if stdout:
-        print "\n".join([j.stdout+(" ("+j.num+")" if num else "")+(" : "+j.why if why and len(j.why)>0 else "") for j in jobs])
-    else:
-        print "\n".join([j.name+(" ("+j.num+")" if num else "")+(" : "+j.why if why and len(j.why)>0 else "") for j in jobs])
+    print "\n".join([
+        (j.stdout if stdout else j.name)+
+        (" ("+j.num+")" if num else "")+
+        (" : "+j.matched+", "+j.machine if matched and len(j.matched)>0 and len(j.machine)>0 else "")+
+        (" : "+j.why if why and len(j.why)>0 else "")
+        for j in jobs
+    ])
 
 def manageJobs(argv=None):
     if argv is None: argv = sys.argv[1:]
@@ -107,6 +115,7 @@ def manageJobs(argv=None):
     parser.add_option("-k", "--kill", dest="kill", default=False, action="store_true", help="remove the selected jobs (default = %default)")
     parser.add_option("-d", "--dir", dest="dir", default=parser_dict["manage"]["dir"], help="directory for stdout files (used for backup when resubmitting) (default = %default)")
     parser.add_option("-w", "--why", dest="why", default=False, action="store_true", help="show why a job was held (default = %default)")
+    parser.add_option("-m", "--matched", dest="matched", default=False, action="store_true", help="show site and machine to which the job matched (default = %default)")
     parser.add_option("--add-sites", dest="addsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to add (default = %default)')
     parser.add_option("--rm-sites", dest="rmsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to remove (default = %default)')
     parser.add_option("--ssh", dest="ssh", action="store_true", default=False, help='internal option if script is run recursively over ssh')
@@ -177,12 +186,12 @@ def manageJobs(argv=None):
                     if len(stderrlinesjoined)>1: print stderrlinesjoined
                     client.close()
                 else:
-                    printJobs(jobs_tmp,options.num,options.stdout,options.why)
+                    printJobs(jobs_tmp,options.num,options.stdout,options.why,options.matched)
         # end here
         sys.exit()
     else:
         jobs = getJobs(options)
-        printJobs(jobs,options.num,options.stdout,options.why)
+        printJobs(jobs,options.num,options.stdout,options.why,options.matched)
 
     # resubmit jobs
     if options.resubmit:
