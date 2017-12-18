@@ -202,7 +202,7 @@ Some default Python arguments are provided in case the user is using the default
 * `--disk [amount]`: amount of disk space to request for job [kB] (default = 10000000)
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
-* `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect)
+* `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
 
 A few other Python arguments are not explicitly included in the default setup, but may often be added by users:
 * `-o, --output [dir]`: path to output directory
@@ -237,7 +237,7 @@ Default extra options:
 * `--disk [amount]`: amount of disk space to request for job [kB] (default = 10000000)
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
-* `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect)
+* `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
 
 "Reserved", but not actually used by default:
 * `-o, --output [dir]`: path to output directory
@@ -315,7 +315,7 @@ Expected categories and values:
     * `user = [username]`: typically specified in user's home area
     * `scripts = [script(s)]`: list of scripts to link from this repository to user job directory (comma-separated list)
 * `submit`
-    * nothing expected by default; can be extended by user
+    * `sites = [sites]`: sites for global pool submission (comma-separated list)
 * `manage`:
     * `dir = [dir]`: backup directory for logs from failing jobs
     * `defaultredir = [dir]`: default xrootd redirector (if using site name)
@@ -344,3 +344,6 @@ it will simply skip the check of running jobs.
 In contrast, `manageJobs` absolutely depends on the Condor python bindings. It will also try very hard to find them,
 but if they are not available, it cannot run. It also has optional dependencies on [paramiko](http://www.paramiko.org/) and
 [python-gssapi](https://pypi.python.org/pypi/python-gssapi/0.6.4), which are needed for the script to run itself over ssh.
+
+For more information about global pool sites, see 
+[Selecting Sites - CMS Connect Handbook](https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
