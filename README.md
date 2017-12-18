@@ -125,6 +125,8 @@ For each value 0 &le; n &lt; N, a job will be submitted; Condor internally uses 
 The value of `$(Process)` can be used to differentiate each individual job in the set.
 To allow reuse of the same JDL in case of resubmitting just a few removed jobs (see [Missing mode](#missing-mode) below),
 the `Queue N` line in the JDL is commented out, and instead the `-queue` option of `condor_submit` is used.
+In case this is not desired or possible for some reason (e.g. due to an old version or wrapper of `condor_submit`),
+the option `-q, --no-queue-arg` can be used.
 
 #### Missing mode
 
@@ -134,6 +136,8 @@ It has an option to make a resubmission script with a specified name: `-r, --res
 (Otherwise, it will just print a list of missing jobs.)
 It also has an option `-u, --user [username]` to specify which user's jobs to check in the Condor queue.
 The default value for `user` can be specified in the `.prodconfig` file (see [Configuration](#configuration)).
+The option `-q, --no-queue-arg` can also be used here; in this case, the JDL file will be modified
+with the list of jobs to be resubmitted (instead of using `-queue`).
 
 This mode also relies on knowledge of HTCondor collectors and schedulers. Values for the LPC and CMS Connect
 are specified in the default `.prodconfig` file (see [Configuration](#configuration)).
@@ -220,6 +224,7 @@ One shell argument is effectively reserved if the user wants to use the [job man
 * `-m, --missing`: check for missing jobs
 * `-r, --resub [script_name.sh]`: create resubmission script
 * `-u, --user [username]`: view jobs from this user (default from `.prodconfig`)
+* `-q, --no-queue-arg`: don't use -queue argument in condor_submit
 
 Default step1 options:
 * `-k, --keep`: keep existing tarball (don't run a `tar` command)

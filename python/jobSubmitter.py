@@ -120,6 +120,7 @@ class jobSubmitter(object):
         parser.add_option("-m", "--missing", dest="missing", default=False, action="store_true", help="check for missing jobs (default = %default)")
         parser.add_option("-r", "--resub", dest="resub", default="", help="make a resub script with specified name (default = %default)")
         parser.add_option("-u", "--user", dest="user", default=parser_dict["common"]["user"], help="view jobs from this user (submitter) (default = %default)")
+        parser.add_option("-q", "--no-queue-arg", dest="noQueueArg", default=False, action="store_true", help="don't use -queue argument in condor_submit (default = %default)")
 
     def checkDefaultOptions(self,options,parser):
         if (options.submit + options.count + options.missing)>1:
@@ -236,11 +237,13 @@ class jobSubmitter(object):
         with open(job.jdl,'a') as outfile:
             for append_ in job.appends:
                 outfile.write(append_+"\n")
-            outfile.write("# "+job.queue.replace("-queue","Queue")+"\n")
+            if self.noQueueArg: outfile.write(job.queue.replace("-queue","Queue")+"\n")
+            else: outfile.write("# "+job.queue.replace("-queue","Queue")+"\n")
                 
     def doSubmit(self,job):
         if os.path.isfile(job.jdl):
-            cmd = "condor_submit "+job.jdl+" "+job.queue
+#            cmd = "condor_submit "+job.jdl+" "+job.queue
+            cmd = "condor_submit "+job.jdl
             os.system(cmd)
         else:
             print "Error: couldn't find "+job.jdl+", try running in prepare mode"
@@ -253,7 +256,21 @@ class jobSubmitter(object):
         if len(diffList)>0:
             if len(self.resub)>0:
                 numlist = sorted([str(jobDict[j]) for j in diffList])
-                self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(numlist)+'\n')
+                if self.noQueueArg:
+                    # get jdl lines for this job
+                    with open(job.jdl,'r') as file:
+                        jdlLines = [line for line in file]
+                    # overwrite queue command in jdl
+                    with open(job.jdl,'w') as file:
+                        for line in jdlLines:
+                            if line.startswith("Queue"):
+                                file.write("#"+line)
+                                file.write("Queue Process in "+','.join(numlist)+"\n")
+                            else:
+                                file.write(line)
+                    self.missingLines.append('condor_submit '+job.jdl+'\n')
+                else:
+                    self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(numlist)+'\n')
             else:
                 self.missingLines.extend(diffList)
 
