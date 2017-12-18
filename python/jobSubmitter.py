@@ -286,7 +286,20 @@ class jobSubmitter(object):
             outsplit = self.output.find("/store")
             lfn = self.output[outsplit:]
             xrd = self.output[:outsplit]
-            files = filter(None,os.popen("xrdfs "+xrd+" ls "+lfn).read().split('\n'))
+            if "fnal.gov" in xrd and not "fnal.gov" in os.uname()[1]:
+                # check for ticket
+                test_krb = subprocess.Popen('klist', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                test_krb_msg = test_krb.communicate()
+                has_krb = False
+                for line in test_krb_msg[0].split('\n'):
+                    if "Default principal" in line and "FNAL.GOV" in line:
+                        has_krb = True
+                        break
+                if not has_krb:
+                    raise RuntimeError("No kerberos ticket found for FNAL.GOV")
+                files = filter(None,os.popen("ssh cmslpc-sl6.fnal.gov 'xrdfs "+xrd+" ls "+lfn+"'").read().split('\n'))
+            else:
+                files = filter(None,os.popen("xrdfs "+xrd+" ls "+lfn).read().split('\n'))
             # basename
             filesSet = set([ self.finishedToJobName(f) for f in files])
         return filesSet
