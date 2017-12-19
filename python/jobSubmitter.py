@@ -255,7 +255,7 @@ class jobSubmitter(object):
         diffList = list(sorted(diffSet))
         if len(diffList)>0:
             if len(self.resub)>0:
-                numlist = sorted([str(jobDict[j]) for j in diffList])
+                numlist = sorted([jobDict[j] for j in diffList])
                 if self.noQueueArg:
                     # get jdl lines for this job
                     with open(job.jdl,'r') as file:
@@ -265,12 +265,12 @@ class jobSubmitter(object):
                         for line in jdlLines:
                             if line.startswith("Queue"):
                                 file.write("#"+line)
-                                file.write("Queue Process in "+','.join(numlist)+"\n")
+                                file.write("Queue Process in "+','.join([str(x) for x in numlist])+"\n")
                             else:
                                 file.write(line)
                     self.missingLines.append('condor_submit '+job.jdl+'\n')
                 else:
-                    self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(numlist)+'\n')
+                    self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join([str(x) for x in numlist])+'\n')
             else:
                 self.missingLines.extend(diffList)
 
