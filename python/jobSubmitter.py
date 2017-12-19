@@ -265,12 +265,12 @@ class jobSubmitter(object):
                         for line in jdlLines:
                             if line.startswith("Queue"):
                                 file.write("#"+line)
-                                file.write("Queue Process in "+','.join([str(x) for x in numlist])+"\n")
+                                file.write("Queue Process in "+','.join(map(str,numlist))+"\n")
                             else:
                                 file.write(line)
                     self.missingLines.append('condor_submit '+job.jdl+'\n')
                 else:
-                    self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join([str(x) for x in numlist])+'\n')
+                    self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(map(str,numlist))+'\n')
             else:
                 self.missingLines.extend(diffList)
 
