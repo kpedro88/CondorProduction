@@ -242,8 +242,8 @@ class jobSubmitter(object):
                 
     def doSubmit(self,job):
         if os.path.isfile(job.jdl):
-#            cmd = "condor_submit "+job.jdl+" "+job.queue
-            cmd = "condor_submit "+job.jdl
+            if self.noQueueArg: cmd = "condor_submit "+job.jdl+" "+job.queue
+            else: cmd = "condor_submit "+job.jdl
             os.system(cmd)
         else:
             print "Error: couldn't find "+job.jdl+", try running in prepare mode"
