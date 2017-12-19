@@ -242,8 +242,14 @@ class jobSubmitter(object):
                 
     def doSubmit(self,job):
         if os.path.isfile(job.jdl):
-            if self.noQueueArg: cmd = "condor_submit "+job.jdl+" "+job.queue
-            else: cmd = "condor_submit "+job.jdl
+            if self.noQueueArg:
+                cmd = "condor_submit "+job.jdl
+            else:
+                queue = job.queue
+                # form should be: '-queue "..."'
+                if queue[7]!='"': queue = queue[:7]+'"'+queue[7:]
+                if queue[-1]!='"': queue = queue+'"'
+                cmd = "condor_submit "+job.jdl+" "+job.queue
             os.system(cmd)
         else:
             print "Error: couldn't find "+job.jdl+", try running in prepare mode"
@@ -270,7 +276,7 @@ class jobSubmitter(object):
                                 file.write(line)
                     self.missingLines.append('condor_submit '+job.jdl+'\n')
                 else:
-                    self.missingLines.append('condor_submit '+job.jdl+' -queue Process in '+','.join(map(str,numlist))+'\n')
+                    self.missingLines.append('condor_submit '+job.jdl+' -queue "Process in '+','.join(map(str,numlist))+'"\n')
             else:
                 self.missingLines.extend(diffList)
 
