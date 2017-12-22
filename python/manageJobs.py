@@ -32,7 +32,7 @@ class CondorJob(object):
         if self.sites==classad.Value.Undefined: self.sites = ""
         self.matched = result["MATCH_EXP_JOB_GLIDEIN_CMSSite"] if "MATCH_EXP_JOB_GLIDEIN_CMSSite" in result.keys() else ""
         if self.matched==classad.Value.Undefined: self.matched = ""
-        self.machine = result["LastRemoteHost"] if "LastRemoteHost" in result.keys() else ""
+        self.machine = result["RemoteHost"] if "RemoteHost" in result.keys() else ""
         if self.machine==classad.Value.Undefined: self.matched = ""
         if len(self.machine)>0: self.machine = self.machine.split('@')[-1]
 
@@ -56,7 +56,7 @@ def getJobs(options, scheddurl=""):
 
     # get info for selected jobs
     jobs = []
-    for result in schedd.xquery(constraint,["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","LastRemoteHost"]):
+    for result in schedd.xquery(constraint,["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost"]):
         # check greps
         checkstring = result["Out"]
         if "HoldReason" in result.keys(): checkstring += " "+result["HoldReason"]
