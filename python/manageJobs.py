@@ -77,7 +77,7 @@ def getJobs(options, scheddurl=""):
             update = int(result["ChirpCMSSWLastUpdate"]) if "ChirpCMSSWLastUpdate" in result.keys() else 0
             # look for jobs not updating for 12 hours
             tdiff = time - update
-            if time>0 and update>0 and tdiff>43200: result["HoldReason"] = "Job stuck for "+str(tdiff/3600)+" hours"
+            if time>0 and update>0 and tdiff>(options.stuckThreshold*3600): result["HoldReason"] = "Job stuck for "+str(tdiff/3600)+" hours"
             else: continue
         jobs.append(CondorJob(result,scheddurl))
 
@@ -118,6 +118,7 @@ def manageJobs(argv=None):
     parser.add_option("-m", "--matched", dest="matched", default=False, action="store_true", help="show site and machine to which the job matched (default = %default)")
     parser.add_option("--add-sites", dest="addsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to add (default = %default)')
     parser.add_option("--rm-sites", dest="rmsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to remove (default = %default)')
+    parser.add_option("--stuck-threshold", dest="stuckThreshold", default=12, help="threshold in hours to define stuck jobs (default = %default)")
     parser.add_option("--ssh", dest="ssh", action="store_true", default=False, help='internal option if script is run recursively over ssh')
     parser.add_option("--help", dest="help", action="store_true", default=False, help='show this help message')
     (options, args) = parser.parse_args(args=argv)
