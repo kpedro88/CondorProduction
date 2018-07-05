@@ -199,6 +199,9 @@ def manageJobs(argv=None):
         jobs = getJobs(options)
         printJobs(jobs,options.num,options.stdout,options.why,options.matched)
 
+    # exit if no jobs found
+    if len(jobs)==0: return
+
     # resubmit jobs
     if options.resubmit:
         # get scheduler
@@ -221,6 +224,7 @@ def manageJobs(argv=None):
             tmp_dir = options.dir+"/tmp"
             if not os.path.isdir(tmp_dir):
                 os.mkdir(tmp_dir)
+        # actions that must be done per-job
         for j in jobs:
             logfile = options.dir+"/"+j.stdout+".stdout"
             # hold running jobs first (in case hung)
@@ -232,21 +236,16 @@ def manageJobs(argv=None):
                     with open(logfile,'w') as logf:
                         subprocess.Popen(cmdt, shell=True, stdout=logf, stderr=subprocess.PIPE).communicate()
                 schedd.act(htcondor.JobAction.Hold,[j.num])
-            # reset counts to avoid removal
-            schedd.edit([j.num],"NumShadowStarts","0")
-            schedd.edit([j.num],"NumJobStarts","0")
-            schedd.edit([j.num],"JobRunCount","0")
-            # change sites if desired
-            if len(options.addsites)>0 or len(options.rmsites)>0:
-                sitelist = filter(None,j.sites.split(','))
-                for addsite in options.addsites:
-                    if not addsite in sitelist: sitelist.append(addsite)
-                for rmsite in options.rmsites:
-                    if rmsite in sitelist: del sitelist[sitelist.index(rmsite)]
-                schedd.edit([j.num],"DESIRED_Sites",'"'+','.join(sitelist)+'"')
-            # any other classad edits
-            for editname,editval in edits.iteritems():
-                schedd.edit([j.num],str(editname),str(editval))
+            # backup log
+            if len(options.dir)>0 and not options.idle:
+                prev_logs = glob.glob(backup_dir+"/"+j.stdout+"_*")
+                num_logs = 0
+                # increment log number if job has been resubmitted before
+                if len(prev_logs)>0:
+                    num_logs = max([int(log.split("_")[-1].replace(".stdout","")) for log in prev_logs])+1
+                # copy logfile
+                if os.path.isfile(logfile):
+                    shutil.copy2(logfile,backup_dir+"/"+j.stdout+"_"+str(num_logs)+".stdout")
             # edit redirector
             if len(options.xrootd)>0:
                 args = j.args.split(' ')
@@ -257,27 +256,34 @@ def manageJobs(argv=None):
                 except:
                     args.extend(["-x",options.xrootd])
                 schedd.edit([j.num],"Args",'"'+" ".join(args[:])+'"')
-            # end here if editing idle job - no need to release or backup
-            if options.idle:
-                continue
-            # backup log
-            if len(options.dir)>0:
-                prev_logs = glob.glob(backup_dir+"/"+j.stdout+"_*")
-                num_logs = 0
-                # increment log number if job has been resubmitted before
-                if len(prev_logs)>0:
-                    num_logs = max([int(log.split("_")[-1].replace(".stdout","")) for log in prev_logs])+1
-                # copy logfile
-                if os.path.isfile(logfile):
-                    shutil.copy2(logfile,backup_dir+"/"+j.stdout+"_"+str(num_logs)+".stdout")
-            # release job
-            schedd.act(htcondor.JobAction.Release,[j.num])
+        # actions that can be applied to all jobs
+        jobnums = [j.num for j in jobs]
+        # reset counts to avoid removal
+        schedd.edit(jobnums,"NumShadowStarts","0")
+        schedd.edit(jobnums,"NumJobStarts","0")
+        schedd.edit(jobnums,"JobRunCount","0")
+        # change sites if desired
+        # takes site list from the first job
+        if len(options.addsites)>0 or len(options.rmsites)>0:
+            sitelist = filter(None,jobs[0].sites.split(','))
+            for addsite in options.addsites:
+                if not addsite in sitelist: sitelist.append(addsite)
+            for rmsite in options.rmsites:
+                if rmsite in sitelist: del sitelist[sitelist.index(rmsite)]
+            schedd.edit(jobnums,"DESIRED_Sites",'"'+','.join(sitelist)+'"')
+        # any other classad edits
+        for editname,editval in edits.iteritems():
+            schedd.edit(jobnums,str(editname),str(editval))
+        # release jobs (unless idle - then no need to release)
+        if not options.idle:
+            schedd.act(htcondor.JobAction.Release,jobnums)
     # or remove jobs
     elif options.kill:
         # get scheduler
         schedd = htcondor.Schedd() # defaults to local
-        for j in jobs:
-            schedd.act(htcondor.JobAction.Remove,[j.num])
+        # actions that can be applied to all jobs
+        jobnums = [j.num for j in jobs]
+        schedd.act(htcondor.JobAction.Remove,jobnums)
 
 if __name__=="__main__":
     manageJobs()
