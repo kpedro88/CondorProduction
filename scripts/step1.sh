@@ -26,7 +26,7 @@ done
 echo ""
 echo "parameter set:"
 echo "CMSSWVER: $CMSSWVER"
-if [ -n "$CMSSLOC" ]; then
+if [ -n "$CMSSWLOC" ]; then
 	echo "CMSSWLOC: $CMSSWLOC"
 fi
 echo ""
@@ -38,8 +38,10 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 # three ways to get CMSSW: tarball transferred by condor, tarball transferred by xrdcp (address provided), new release (SCRAM_ARCH provided)
 if [[ "$CMSSWLOC" == root:* ]]; then
-	xrdcp ${CMSSLOC}/${CMSSWVER}.tar.gz .
+	echo "Getting CMSSW via xrdcp"
+	xrdcp ${CMSSWLOC}/${CMSSWVER}.tar.gz .
 elif [ -n "$CMSSWLOC" ]; then
+	echo "Getting CMSSW via cmsrel"
 	export SCRAM_ARCH ${CMSSW_LOC}
 fi
 
