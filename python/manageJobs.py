@@ -44,6 +44,31 @@ class CondorJob(object):
         self.events = int(result["ChirpCMSSWEvents"]) if "ChirpCMSSWEvents" in result.keys() else 0
         self.rate = float(self.events)/(self.time*3600) if self.time>0 else 0
 
+def getJob(options,result,jobs,scheddurl=""):
+    # check greps
+    checkstring = result["Out"]
+    if "HoldReason" in result.keys(): checkstring += " "+result["HoldReason"]
+    gfound = False
+    for gcheck in options.grep:
+        if gcheck in checkstring:
+            gfound = True
+            break
+    if len(options.grep)>0 and not gfound: return
+    vfound = False
+    for vcheck in options.vgrep:
+        if vcheck in checkstring:
+            vfound = True
+            break
+    if len(options.vgrep)>0 and vfound: return
+    if options.stuck:
+        time = int(result["ServerTime"]) if "ServerTime" in result.keys() else 0
+        update = int(result["ChirpCMSSWLastUpdate"]) if "ChirpCMSSWLastUpdate" in result.keys() else 0
+        # look for jobs not updating for 12 hours
+        tdiff = time - update
+        if time>0 and update>0 and tdiff>(options.stuckThreshold*3600): result["HoldReason"] = "Job stuck for "+str(tdiff/3600)+" hours"
+        else: return
+    jobs.append(CondorJob(result,scheddurl))
+
 def getJobs(options, scheddurl=""):
     constraint = 'Owner=="'+options.user+'"'
     if options.held: constraint += ' && JobStatus==5'
@@ -65,31 +90,12 @@ def getJobs(options, scheddurl=""):
     # get info for selected jobs
     jobs = []
     props = ["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","EnteredCurrentStatus","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
-    for result in schedd.xquery(constraint,props):
-        # check greps
-        checkstring = result["Out"]
-        if "HoldReason" in result.keys(): checkstring += " "+result["HoldReason"]
-        gfound = False
-        for gcheck in options.grep:
-            if gcheck in checkstring:
-                gfound = True
-                break
-        if len(options.grep)>0 and not gfound: continue
-        vfound = False
-        for vcheck in options.vgrep:
-            if vcheck in checkstring:
-                vfound = True
-                break
-        if len(options.vgrep)>0 and vfound: continue
-        if options.stuck:
-            time = int(result["ServerTime"]) if "ServerTime" in result.keys() else 0
-            update = int(result["ChirpCMSSWLastUpdate"]) if "ChirpCMSSWLastUpdate" in result.keys() else 0
-            # look for jobs not updating for 12 hours
-            tdiff = time - update
-            if time>0 and update>0 and tdiff>(options.stuckThreshold*3600): result["HoldReason"] = "Job stuck for "+str(tdiff/3600)+" hours"
-            else: continue
-        jobs.append(CondorJob(result,scheddurl))
-
+    if options.finished>0:
+        for result in schedd.history(constraint,props,options.finished):
+            getJob(options,result,jobs,scheddurl)
+    else:
+        for result in schedd.xquery(constraint,props):
+            getJob(options,result,jobs,scheddurl)
     return jobs
 
 def printJobs(jobs, num=False, prog=False, stdout=False, why=False, matched=False):
@@ -99,7 +105,6 @@ def printJobs(jobs, num=False, prog=False, stdout=False, why=False, matched=Fals
         (j.stdout if stdout else j.name)+
         (" ("+j.num+")" if num else "")+
         (" ({:d} events in {:.1f} hours = {:.1f} evt/sec)".format(j.events,j.time,j.rate) if prog else "")+
-#        (" ("+str(j.events)+" events in "+str(j.time)+" hours = "+str(j.rate)+" evt/sec)" if prog else "")+
         (" : "+j.matched+", "+j.machine if matched and len(j.matched)>0 and len(j.machine)>0 else "")+
         (" : "+j.why if why and len(j.why)>0 else "")
         for j in jobs
@@ -115,6 +120,7 @@ def manageJobs(argv=None):
     parser.add_option("-h", "--held", dest="held", default=False, action="store_true", help="view only held jobs (default = %default)")
     parser.add_option("-r", "--running", dest="running", default=False, action="store_true", help="view only running jobs (default = %default)")
     parser.add_option("-i", "--idle", dest="idle", default=False, action="store_true", help="view only idle jobs (default = %default)")
+    parser.add_option("-f", "--finished", dest="finished", default=0, type=int, help="view only n finished jobs  (default = %default)")
     parser.add_option("-t", "--stuck", dest="stuck", default=False, action="store_true", help="view only stuck jobs (subset of running) (default = %default)")
     parser.add_option("-g", "--grep", dest="grep", default=[], type="string", action="callback", callback=list_callback, help="view jobs with [comma-separated list of strings] in the job name or hold reason (default = %default)")
     parser.add_option("-v", "--vgrep", dest="vgrep", default=[], type="string", action="callback", callback=list_callback, help="view jobs without [comma-separated list of strings] in the job name or hold reason (default = %default)")
@@ -144,8 +150,8 @@ def manageJobs(argv=None):
     # check for exclusive options
     if options.stuck:
         options.running = True
-    if (options.held + options.running + options.idle)>1:
-        parser.error("Options -h, -r, -i are exclusive, pick one!")
+    if (options.held + options.running + options.idle + int(options.finished>0))>1:
+        parser.error("Options -h, -r, -i, -f are exclusive, pick one!")
     if options.resubmit and options.kill:
         parser.error("Can't use -s and -k together, pick one!")
     if options.all and not has_paramiko and (options.kill or options.resubmit):
@@ -165,6 +171,9 @@ def manageJobs(argv=None):
             options.xrootd = options.xrootd+"/store/test/xrootd/"+sitename
     if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
         options.all = False
+    if options.finished>0:
+        options.resubmit = False
+        options.kill = False
         
     jobs = []
     if options.all:

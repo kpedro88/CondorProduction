@@ -280,6 +280,7 @@ It uses a number of command line options to specify how to display job informati
 * `-h, --held`: view only held jobs
 * `-r, --running`: view only running jobs
 * `-i, --idle`: view only idle jobs
+* `-f, --finished [n]`: view only n finished jobs
 * `-t, --stuck`: view only stuck jobs (subset of running)
 * `-g, --grep [patterns]`: view jobs with [comma-separated list of strings] in the job name or hold reason
 * `-v, --vgrep [patterns]`: view jobs without [comma-separated list of strings] in the job name or hold reason
@@ -299,7 +300,7 @@ It uses a number of command line options to specify how to display job informati
 * `--ssh`: internal option if script is run recursively over ssh
 * `--help`: show help message and exit
 
-The options `-h`, `-i`, `-r` are exclusive. The options `-s` and `-k` are also exclusive. The option `-a` is currently only supported
+The options `-h`, `-i`, `-r`, `-f` are exclusive. The options `-s` and `-k` are also exclusive. The option `-a` is currently only supported
 at the LPC (where each interactive node has its own scheduler). The script can ssh to each node and run itself to modify the jobs
 on that node (because each scheduler can only be accessed for write operations from its respective node).
 
