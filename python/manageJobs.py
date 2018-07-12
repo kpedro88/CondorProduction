@@ -40,7 +40,7 @@ class CondorJob(object):
             self.machine = ""
         if self.machine==classad.Value.Undefined: self.matched = ""
         if len(self.machine)>0: self.machine = self.machine.split('@')[-1]
-        self.time = float((int(result["ServerTime"]) if "ServerTime" in result.keys() else 0) - (int(result["EnteredCurrentStatus"]) if "EnteredCurrentStatus" in result.keys() else 0))/float(3600)
+        self.time = (float(result["ChirpCMSSWElapsed"]) if "ChirpCMSSWElapsed" in result.keys() else 0.0)/float(3600)
         self.events = int(result["ChirpCMSSWEvents"]) if "ChirpCMSSWEvents" in result.keys() else 0
         self.rate = float(self.events)/(self.time*3600) if self.time>0 else 0
 
@@ -89,7 +89,7 @@ def getJobs(options, scheddurl=""):
 
     # get info for selected jobs
     jobs = []
-    props = ["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","EnteredCurrentStatus","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
+    props = ["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","ChirpCMSSWElapsed","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
     if options.finished>0:
         for result in schedd.history(constraint,props,options.finished):
             getJob(options,result,jobs,scheddurl)
