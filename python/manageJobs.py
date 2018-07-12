@@ -40,6 +40,9 @@ class CondorJob(object):
             self.machine = ""
         if self.machine==classad.Value.Undefined: self.matched = ""
         if len(self.machine)>0: self.machine = self.machine.split('@')[-1]
+        self.time = float((int(result["ServerTime"]) if "ServerTime" in result.keys() else 0) - (int(result["EnteredCurrentStatus"]) if "EnteredCurrentStatus" in result.keys() else 0))/float(3600)
+        self.events = int(result["ChirpCMSSWEvents"]) if "ChirpCMSSWEvents" in result.keys() else 0
+        self.rate = float(self.events)/(self.time*3600) if self.time>0 else 0
 
 def getJobs(options, scheddurl=""):
     constraint = 'Owner=="'+options.user+'"'
@@ -61,7 +64,8 @@ def getJobs(options, scheddurl=""):
 
     # get info for selected jobs
     jobs = []
-    for result in schedd.xquery(constraint,["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]):
+    props = ["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","EnteredCurrentStatus","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
+    for result in schedd.xquery(constraint,props):
         # check greps
         checkstring = result["Out"]
         if "HoldReason" in result.keys(): checkstring += " "+result["HoldReason"]
@@ -88,12 +92,14 @@ def getJobs(options, scheddurl=""):
 
     return jobs
 
-def printJobs(jobs, num=False, stdout=False, why=False, matched=False):
+def printJobs(jobs, num=False, prog=False, stdout=False, why=False, matched=False):
     if len(jobs)==0: return
     
     print "\n".join([
         (j.stdout if stdout else j.name)+
         (" ("+j.num+")" if num else "")+
+        (" ({:d} events in {:.1f} hours = {:.1f} evt/sec)".format(j.events,j.time,j.rate) if prog else "")+
+#        (" ("+str(j.events)+" events in "+str(j.time)+" hours = "+str(j.rate)+" evt/sec)" if prog else "")+
         (" : "+j.matched+", "+j.machine if matched and len(j.matched)>0 and len(j.machine)>0 else "")+
         (" : "+j.why if why and len(j.why)>0 else "")
         for j in jobs
@@ -121,6 +127,7 @@ def manageJobs(argv=None):
     parser.add_option("-d", "--dir", dest="dir", default=parser_dict["manage"]["dir"], help="directory for stdout files (used for backup when resubmitting) (default = %default)")
     parser.add_option("-w", "--why", dest="why", default=False, action="store_true", help="show why a job was held (default = %default)")
     parser.add_option("-m", "--matched", dest="matched", default=False, action="store_true", help="show site and machine to which the job matched (default = %default)")
+    parser.add_option("-p", "--progress", dest="progress", default=False, action="store_true", help="show job progress (time and nevents) (default = %default)")
     parser.add_option("--add-sites", dest="addsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to add (default = %default)')
     parser.add_option("--rm-sites", dest="rmsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to remove (default = %default)')
     parser.add_option("--stuck-threshold", dest="stuckThreshold", default=12, help="threshold in hours to define stuck jobs (default = %default)")
@@ -192,12 +199,12 @@ def manageJobs(argv=None):
                     if len(stderrlinesjoined)>1: print stderrlinesjoined
                     client.close()
                 else:
-                    printJobs(jobs_tmp,options.num,options.stdout,options.why,options.matched)
+                    printJobs(jobs_tmp,options.num,options.progress,options.stdout,options.why,options.matched)
         # end here
         sys.exit()
     else:
         jobs = getJobs(options)
-        printJobs(jobs,options.num,options.stdout,options.why,options.matched)
+        printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
 
     # exit if no jobs found
     if len(jobs)==0: return
