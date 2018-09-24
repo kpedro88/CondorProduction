@@ -187,8 +187,7 @@ The default step1 should be sufficient for most users. It allows a CMSSW environ
 The Python arguments for the default step1 are:
 * `-k, --keep`: keep existing tarball (don't run a `tar` command)
 * `-n, --no-voms`: don't check for a VOMS grid proxy (proxy line is removed from JDL template, CMSSW environment via xrdcp not allowed)
-* `-t, --cmssw-method [method]`: how to get CMSSW env: transfer, xrdcp, or cmsrel
-* `-i, --input [dir]`: directory for CMSSW tarball if using xrdcp
+* `-t, --cmssw-method [method]`: how to get CMSSW env: transfer, cmsrel, or address for xrdcp (default = transfer)
 
 The arguments for the default [step1.sh](./scripts/step1.sh) are:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
@@ -241,8 +240,7 @@ One shell argument is effectively reserved if the user wants to use the [job man
 Default step1 options:
 * `-k, --keep`: keep existing tarball (don't run a `tar` command)
 * `-n, --no-voms`: don't check for a VOMS grid proxy (proxy line is removed from JDL template, CMSSW environment via xrdpc not allowed)
-* `-t, --cmssw-method [method]`: how to get CMSSW env: transfer, xrdcp, or cmsrel
-* `-i, --input [dir]`: directory for CMSSW tarball if using xrdcp
+* `-t, --cmssw-method [method]`: how to get CMSSW env: transfer, cmsrel, or address for xrdcp (default = transfer)
 
 Default extra options:
 * `--jdl [filename]`: name of JDL template file for job

@@ -195,16 +195,15 @@ class jobSubmitter(object):
         self.defaultStep1 = True
         parser.add_option("-k", "--keep", dest="keep", default=False, action="store_true", help="keep existing tarball for job submission (default = %default)")
         parser.add_option("-n", "--no-voms", dest="novoms", default=False, action="store_true", help="skip check and use of voms proxy (default = %default)")
-        parser.add_option("-t", "--cmssw-method", dest="cmsswMethod", type="choice", choices=["transfer","xrdcp","cmsrel"], default="transfer", help="how to get CMSSW env: transfer, xrdcp, or cmsrel (default = %default)")
-        parser.add_option("-i", "--input", dest="input", default="", help="input dir for CMSSW tarball if using xrdcp (default = %default)")
+        parser.add_option("-t", "--cmssw-method", dest="cmsswMethod", default="transfer", help="how to get CMSSW env: transfer, cmsrel, or address for xrdcp (default = %default)")
 
     def checkStep1Options(self,options,parser):
-        if options.cmsswMethod=="xrdcp" and len(options.input)==0:
-            parser.error("CMSSW method xrdcp requires --input value")
+        if options.cmsswMethod!="transfer" and options.cmsswMethod!="cmsrel" and not options.cmsswMethod.startswith("root://"):
+            parser.error("Unknown CMSSW method: "+options.cmsswMethod)
         # no need to retar if not submitting or not using tarball
         if options.cmsswMethod=="cmsrel" or not options.submit:
             options.keep = True
-        if options.novoms and options.cmsswMethod=="xrdcp":
+        if options.novoms and options.cmsswMethod.startswith("root://"):
             parser.error("Can't xrdcp CMSSW without voms proxy!")
             
     def addExtraOptions(self,parser):
@@ -239,7 +238,7 @@ class jobSubmitter(object):
             cmd = "./checkVomsTar.sh"
             if self.keep: cmd += " -k"
             if self.novoms: cmd += " -n"
-            if not self.keep and self.cmsswMethod=="xrdcp": cmd += " -i "+self.input
+            if not self.keep and self.cmsswMethod.startswith("root://"): cmd += " -i "+self.cmsswMethod
             sp = subprocess.Popen(cmd, shell=True, stdin = sys.stdin, stdout = sys.stdout, stderr = sys.stderr)
             sp.wait()
             
@@ -268,7 +267,7 @@ class jobSubmitter(object):
         step1args = "-C "+cmsswver
         if self.cmsswMethod != "transfer":
             # xrdcp needs input dir, cmsrel needs scram arch
-            step1args += " -L "+(self.input if self.cmsswMethod=="xrdcp" else os.getenv("SCRAM_ARCH"))
+            step1args += " -L "+(self.cmsswMethod if self.cmsswMethod.startswith("root://") else os.getenv("SCRAM_ARCH"))
         job.patterns["STEP1ARGS"] = step1args
         if self.cmsswMethod=="transfer":
             job.patterns["CMSSWVER"] = cmsswver
