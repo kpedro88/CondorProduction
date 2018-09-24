@@ -73,11 +73,12 @@ However, a function `generatePerJob()` is provided to perform common operations 
 
 ### Modes of operation
 
-There are four modes of operation for `jobSubmitter`: count, prepare, submit, and missing.
+There are several modes of operation for `jobSubmitter`: count, prepare, submit, missing, and clean.
 1. count (`-c, --count`): count the expected number of jobs to submit.
 2. prepare (`-p, --prepare`): prepare JDL file(s) and any associated job inputs.
 3. submit (`-s, --submit`): submit jobs to Condor.
 4. missing (`-m, --missing`): check for missing jobs.
+5. clean (`-l, --clean`): clean up log files.
 
 The modes count, submit, and missing are treated as mutually exclusive. The mode prepare can be run with any of them.
 (If prepare is not run before submit, the job submission will fail.)
@@ -141,6 +142,15 @@ with the list of jobs to be resubmitted (instead of using `-queue`).
 
 This mode also relies on knowledge of HTCondor collectors and schedulers. Values for the LPC and CMS Connect
 are specified in the default `.prodconfig` file (see [Configuration](#configuration)).
+
+#### Clean mode
+
+Similar to missing mode, clean mode looks at output files and running jobs to determine which jobs have finished.
+(Finished jobs have output files and are not currently running.)
+It puts all the log files from the finished jobs into a compressed tar archive called "log_#.tar.gz", where "#"
+is incremented based on the presence of any other log archives in the specified directory.
+By default the current directory "." is specified as the output location of the log archive, but this can be 
+changed to any local or remote directory with the option `--clean-dir [dir]`.
 
 ### Job steps
 
@@ -223,6 +233,8 @@ One shell argument is effectively reserved if the user wants to use the [job man
 * `-s, --submit`: submit jobs to Condor
 * `-m, --missing`: check for missing jobs
 * `-r, --resub [script_name.sh]`: create resubmission script
+* `-l, --clean`: clean up log files
+* `--clean-dir`: output dir for log file .tar.gz (default = ".")
 * `-u, --user [username]`: view jobs from this user (default from `.prodconfig`)
 * `-q, --no-queue-arg`: don't use -queue argument in condor_submit
 

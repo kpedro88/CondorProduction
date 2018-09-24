@@ -1,4 +1,4 @@
-import os, subprocess, sys, stat
+import os, subprocess, sys, stat, glob, shutil, tarfile
 from optparse import OptionParser
 from collections import defaultdict, OrderedDict
 from parseConfig import list_callback, parser_dict
@@ -95,6 +95,8 @@ class jobSubmitter(object):
         self.initStep1()
         if self.missing:
             self.initMissing()
+        elif self.clean:
+            self.initClean()
         
     def runPerJob(self,job):
         if self.prepare:
@@ -107,12 +109,16 @@ class jobSubmitter(object):
             self.doSubmit(job)
         elif self.missing:
             self.doMissing(job)
+        elif self.clean:
+            self.doClean(job)
             
     def finishRun(self):
         if self.count:
             self.finishCount()
         elif self.missing:
-            self.finishMissing()        
+            self.finishMissing()
+        elif self.clean:
+            self.finishClean()
             
     def addDefaultOptions(self,parser):
         # control options
@@ -121,6 +127,8 @@ class jobSubmitter(object):
         parser.add_option("-s", "--submit", dest="submit", default=False, action="store_true", help="submit jobs to condor (default = %default)")
         parser.add_option("-m", "--missing", dest="missing", default=False, action="store_true", help="check for missing jobs (default = %default)")
         parser.add_option("-r", "--resub", dest="resub", default="", help="make a resub script with specified name (default = %default)")
+        parser.add_option("-l", "--clean", dest="clean", default=False, action="store_true", help="clean up log files (default = %default)")
+        parser.add_option("--clean-dir", dest="cleanDir", default=".", help="output dir for log file .tar.gz (default = %default)")
         parser.add_option("-u", "--user", dest="user", default=parser_dict["common"]["user"], help="view jobs from this user (submitter) (default = %default)")
         parser.add_option("-q", "--no-queue-arg", dest="noQueueArg", default=False, action="store_true", help="don't use -queue argument in condor_submit (default = %default)")
         self.modes.update({
@@ -128,6 +136,7 @@ class jobSubmitter(object):
             "prepare": 0,
             "submit": 1,
             "missing": 1,
+            "clean": 1,
         })
 
     def checkDefaultOptions(self,options,parser):
@@ -208,6 +217,15 @@ class jobSubmitter(object):
         # find running jobs from condor
         self.runSet = self.findRunning()
         
+    def initClean(self):
+        self.initMissing()
+        # subtract running jobs from finished jobs (in case resubmitted)
+        self.filesSet = self.filesSet - self.runSet
+
+        self.logdir = "logs"
+        if not os.path.isdir(self.logdir):
+            os.mkdir(self.logdir)
+
     def generateDefault(self,job):
         job.patterns["SCRIPTARGS"] = ",".join(self.scripts)
 
@@ -397,4 +415,86 @@ class jobSubmitter(object):
         # make executable
         st = os.stat(rfile.name)
         os.chmod(rfile.name, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)            
-        
+
+    def doClean(self,job):
+        jobSet, jobDict = self.findJobs(job)
+
+        finishedJobSet = jobSet & self.filesSet
+        # remove these jobs from global list
+        self.filesSet = self.filesSet - jobSet
+
+        for jobname in finishedJobSet:
+            # gets .condor. .stdout, .stderr
+            for fname in glob.glob(jobname+"_*.*"):
+                shutil.move(fname,self.logdir)
+
+    def finishClean(self):
+        # check if nothing to do
+        if len(os.listdir(self.logdir))==0:
+            # remove tmp dir
+            shutil.rmtree(self.logdir)
+            return
+
+        # create compressed tarfile
+        logname = "logs_tmp.tar.gz"
+        with tarfile.open(logname,"w:gz") as tar:
+            tar.add(self.logdir,arcname=self.logdir)
+
+        num_logs = 0
+        # check what is already in dir
+        if self.cleanDir.startswith("root://"):
+            # xrootd dir
+            outsplit = self.cleanDir.find("/store")
+            lfn = self.cleanDir[outsplit:]
+            xrd = self.cleanDir[:outsplit]
+            files = filter(
+                None,
+                subprocess.Popen(
+                    "xrdfs "+xrd+" ls "+lfn,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    # necessary to communicate w/ cmslpc at fnal
+                    env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
+                ).communicate()[0].split('\n')
+            )
+            files = [f for f in files if f.endswith(".tar.gz")]
+        else:
+            # local dir
+            files = glob.glob(logname.replace("tmp","*"))
+
+        files = [f for f in files if f!=logname]
+        if len(files)>0:
+            num_logs = max([int(f.split("_")[-1].replace(".tar.gz","")) for f in files])+1
+        logname2 = logname.replace("tmp",str(num_logs))
+
+        rc = 1
+        # copy to dir
+        if self.cleanDir.startswith("root://"):
+            # xrootd dir
+            xrdcp = subprocess.Popen(
+                "xrdcp "+logname+" "+self.cleanDir+"/"+logname2,
+                shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
+            )
+            xrdcp_result = xrdcp.communicate()
+            rc = xrdcp.returncode
+            if rc!=0:
+                print "exit code "+str(rc)+", failure in xrdcp"
+                print xrdcp_result[1]
+        else:
+            # local dir
+            if len(self.cleanDir)==0: self.cleanDir = "."
+            # check what is already in dir
+            if len(files)>0:
+                num_logs = max([int(f.split("_")[-1].replace(".tar.gz","")) for f in files])+1
+            # copy to dir
+            shutil.copy2(logname,self.cleanDir+"/"+logname2)
+            rc = 0
+
+        if rc==0:
+            print "copied logs to "+self.cleanDir+"/"+logname2
+            # remove tmp file
+            os.remove(logname)
+            # remove tmp dir
+            shutil.rmtree(self.logdir)
