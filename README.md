@@ -246,7 +246,7 @@ Default step1 options:
 
 Default extra options:
 * `--jdl [filename]`: name of JDL template file for job
-* `--disk [amount]`: amount of disk space to request for job [kB] (default = 10000000)
+* `--disk [amount]`: amount of disk space to request for job [kB] (default = 1000000)
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)

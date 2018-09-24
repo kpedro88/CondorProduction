@@ -210,7 +210,7 @@ class jobSubmitter(object):
     def addExtraOptions(self,parser):
         # job options
         parser.add_option("--jdl", dest="jdl", default="jobExecCondor.jdl", help="JDL template file for job (default = %default)")
-        parser.add_option("--disk", dest="disk", default=10000000, help="specify amount of disk space per job [kB] (default = %default)")
+        parser.add_option("--disk", dest="disk", default=1000000, help="specify amount of disk space per job [kB] (default = %default)")
         parser.add_option("--memory", dest="memory", default=2000, help="specify amount of memory per job [MB] (default = %default)")
         parser.add_option("--cpus", dest="cpus", default=1, help="specify number of CPU threads per job (default = %default)")
         parser.add_option("--sites", dest="sites", default=parser_dict["submit"]["sites"], help="comma-separated list of sites for global pool running (default = %default)")
