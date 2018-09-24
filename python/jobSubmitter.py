@@ -46,6 +46,8 @@ class jobSubmitter(object):
         
         self.defaultStep1 = False
         self.scripts = ["step1.sh","step2.sh"]
+        # dict of (string name, bool exclusive)
+        self.modes = {}
         
         # define parser
         if parser is None:
@@ -121,12 +123,30 @@ class jobSubmitter(object):
         parser.add_option("-r", "--resub", dest="resub", default="", help="make a resub script with specified name (default = %default)")
         parser.add_option("-u", "--user", dest="user", default=parser_dict["common"]["user"], help="view jobs from this user (submitter) (default = %default)")
         parser.add_option("-q", "--no-queue-arg", dest="noQueueArg", default=False, action="store_true", help="don't use -queue argument in condor_submit (default = %default)")
+        self.modes.update({
+            "count": 1,
+            "prepare": 0,
+            "submit": 1,
+            "missing": 1,
+        })
 
     def checkDefaultOptions(self,options,parser):
-        if (options.submit + options.count + options.missing)>1:
-            parser.error("Options -c, -s, -m are exclusive, pick one!")
-        if (options.submit + options.count + options.missing + options.prepare)==0:
-            parser.error("No operation mode selected! (-c, -p, -s, -m)")
+        nModes = 0
+        nExcls = 0
+        lModes = ""
+        lExcls = ""
+        for mode,excl in self.modes.iteritems():
+            lModes += mode + ", "
+            if excl: lExcls += mode + ", "
+            if getattr(options,mode):
+                nModes += 1
+                if excl: nExcls += 1
+        lModes = lModes[:-2]
+        lExcls = lExcls[:-2]
+        if nExcls>1:
+            parser.error("Modes "+lExcls+" are exclusive, pick one!")
+        if nModes==0:
+            parser.error("No operation mode selected! ("+lModes+")")
 
     # if you use a different step1.sh, you might need to change these
     def addStep1Options(self,parser):
