@@ -7,12 +7,45 @@ from parseConfig import list_callback, parser_dict
 # patterns = [(in,out),(in,out)]
 # currently doesn't handle regex
 def pysed(lines,out,patterns):
-	with open(out,'w') as outfile:
-		for line in lines:
-			linetmp = line
-			for pattern,replace in patterns.iteritems():
-				linetmp = linetmp.replace(str(pattern),str(replace))
-			outfile.write(linetmp)
+    with open(out,'w') as outfile:
+        for line in lines:
+            linetmp = line
+            for pattern,replace in patterns.iteritems():
+                linetmp = linetmp.replace(str(pattern),str(replace))
+            outfile.write(linetmp)
+
+# run xrdfs ls using physical file name
+def pyxrdfsls(pfn):
+    psplit = pfn.find("/store")
+    lfn = pfn[psplit:]
+    xrd = pfn[:psplit]
+    # todo: replace w/ XRootD python bindings?
+    return filter(
+        None,
+        subprocess.Popen(
+            "xrdfs "+xrd+" ls "+lfn,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            # necessary to communicate w/ cmslpc at fnal
+            env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
+        ).communicate()[0].split('\n')
+    )
+
+# run xrdcp
+def pyxrdcp(a,b,verbose=True):
+    # xrootd dir
+    xrdcp = subprocess.Popen(
+        "xrdcp "+a+" "+b,
+        shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
+    )
+    xrdcp_result = xrdcp.communicate()
+    rc = xrdcp.returncode
+    if rc!=0 and verbose:
+        print "exit code "+str(rc)+", failure in xrdcp"
+        print xrdcp_result[1]
+    return rc
 
 class protoJob(object):
     def __init__(self):
@@ -344,21 +377,7 @@ class jobSubmitter(object):
         # find finished jobs via output file list
         filesSet = set()
         if hasattr(self,"output"):
-            outsplit = self.output.find("/store")
-            lfn = self.output[outsplit:]
-            xrd = self.output[:outsplit]
-            # todo: replace w/ XRootD python bindings?
-            files = filter(
-                None,
-                subprocess.Popen(
-                    "xrdfs "+xrd+" ls "+lfn,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    # necessary to communicate w/ cmslpc at fnal
-                    env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
-                ).communicate()[0].split('\n')
-            )
+            files = pyxrdfsls(self.output)
             # basename
             filesSet = set([ self.finishedToJobName(f) for f in files])
         return filesSet
@@ -442,22 +461,10 @@ class jobSubmitter(object):
 
         num_logs = 0
         # check what is already in dir
+        if len(self.cleanDir)==0: self.cleanDir = "."
         if self.cleanDir.startswith("root://"):
             # xrootd dir
-            outsplit = self.cleanDir.find("/store")
-            lfn = self.cleanDir[outsplit:]
-            xrd = self.cleanDir[:outsplit]
-            files = filter(
-                None,
-                subprocess.Popen(
-                    "xrdfs "+xrd+" ls "+lfn,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    # necessary to communicate w/ cmslpc at fnal
-                    env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
-                ).communicate()[0].split('\n')
-            )
+            files = pyxrdfsls(self.cleanDir)
             files = [f for f in files if f.endswith(".tar.gz")]
         else:
             # local dir
@@ -472,23 +479,9 @@ class jobSubmitter(object):
         # copy to dir
         if self.cleanDir.startswith("root://"):
             # xrootd dir
-            xrdcp = subprocess.Popen(
-                "xrdcp "+logname+" "+self.cleanDir+"/"+logname2,
-                shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-                env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
-            )
-            xrdcp_result = xrdcp.communicate()
-            rc = xrdcp.returncode
-            if rc!=0:
-                print "exit code "+str(rc)+", failure in xrdcp"
-                print xrdcp_result[1]
+            rc = pyxrdcp(logname,self.cleanDir+"/"+logname2)
         else:
             # local dir
-            if len(self.cleanDir)==0: self.cleanDir = "."
-            # check what is already in dir
-            if len(files)>0:
-                num_logs = max([int(f.split("_")[-1].replace(".tar.gz","")) for f in files])+1
-            # copy to dir
             shutil.copy2(logname,self.cleanDir+"/"+logname2)
             rc = 0
 
