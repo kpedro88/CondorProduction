@@ -266,9 +266,12 @@ class jobSubmitter(object):
         # command line args for step1
         cmsswver = os.getenv("CMSSW_VERSION")
         step1args = "-C "+cmsswver
-        if self.cmsswMethod != "transfer" or self.scramWorkaround:
-            # xrdcp needs input dir, cmsrel needs scram arch
-            step1args += " -L "+(self.cmsswMethod if self.cmsswMethod.startswith("root://") else os.getenv("SCRAM_ARCH"))
+        if self.cmsswMethod == "cmsrel" or self.scramWorkaround:
+            # cmsrel needs scram arch
+            step1args += " -L "+os.getenv("SCRAM_ARCH")
+        if self.cmsswMethod.startswith("root://"):
+            # xrdcp needs input dir
+            step1args += " -X "+self.cmsswMethod
         job.patterns["STEP1ARGS"] = step1args
         if self.cmsswMethod=="transfer":
             job.patterns["CMSSWVER"] = cmsswver

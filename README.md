@@ -192,7 +192,8 @@ The Python arguments for the default step1 are:
 
 The arguments for the default [step1.sh](./scripts/step1.sh) are:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
-* `-L [arg]`: CMSSW location (if using xrdcp method), `SCRAM_ARCH` value (if using cmsrel method), unused for transfer method
+* `-L [arg]`: `SCRAM_ARCH` value (if using cmsrel method or workaround)
+* `-X [arg]`: CMSSW location (if using xrdcp method)
 
 ##### CMSSW tarball creation
 
@@ -264,7 +265,8 @@ Default extra options:
 
 Default step1 options:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
-* `-L [arg]`: CMSSW location (if using xrdcp method), `SCRAM_ARCH` value (if using cmsrel method), unused for transfer method
+* `-L [arg]`: `SCRAM_ARCH` value (if using cmsrel method or workaround)
+* `-X [arg]`: CMSSW location (if using xrdcp method)
 
 Default extra options:  
 none

@@ -8,6 +8,7 @@ echo "CMSSW on Condor"
 # check arguments
 export CMSSWVER=""
 export CMSSWLOC=""
+export CMSSWXRD=""
 export OPTIND=1
 while [[ $OPTIND -lt $# ]]; do
 	# getopts in silent mode, don't exit on errors
@@ -16,6 +17,8 @@ while [[ $OPTIND -lt $# ]]; do
 		C) export CMSSWVER=$OPTARG
 		;;
 		L) export CMSSWLOC=$OPTARG
+		;;
+		X) export CMSSWXRD=$OPTARG
 		;;
 		# keep going if getopts had an error
 		\? | :) OPTIND=$((OPTIND+1))
@@ -37,10 +40,11 @@ export PATH="/usr/libexec/condor:$PATH"
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 # three ways to get CMSSW: tarball transferred by condor, tarball transferred by xrdcp (address provided), new release (SCRAM_ARCH provided)
-if [[ "$CMSSWLOC" == root:* ]]; then
+if [[ "$CMSSWXRD" == root:* ]]; then
 	echo "Getting CMSSW via xrdcp"
-	xrdcp ${CMSSWLOC}/${CMSSWVER}.tar.gz .
-elif [ -n "$CMSSWLOC" ]; then
+	xrdcp ${CMSSWXRD}/${CMSSWVER}.tar.gz .
+fi
+if [ -n "$CMSSWLOC" ]; then
 	echo "Getting CMSSW via cmsrel"
 	export SCRAM_ARCH ${CMSSWLOC}
 fi
