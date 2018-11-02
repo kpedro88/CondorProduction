@@ -47,9 +47,19 @@ fi
 
 # use a tarball if we have it, otherwise make a new release area
 if [ -e ${CMSSWVER}.tar.gz ]; then
-	tar -xzf ${CMSSWVER}.tar.gz
-	cd ${CMSSWVER}
-	scram b ProjectRename
+	# workaround
+	if [ -n "$CMSSWLOC" ]; then
+		mkdir tmp
+		tar -xzf ${CMSSWVER}.tar.gz -C tmp
+		scram project ${CMSSWVER}
+		# omits hidden dirs such as .SCRAM
+		cp -r tmp/${CMSSWVER}/* ${CMSSWVER}/
+		cd ${CMSSWVER}
+	else
+		tar -xzf ${CMSSWVER}.tar.gz
+		cd ${CMSSWVER}
+		scram b ProjectRename
+	fi
 else
 	scram project ${CMSSWVER}
 	cd ${CMSSWVER}

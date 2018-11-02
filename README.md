@@ -188,6 +188,7 @@ The Python arguments for the default step1 are:
 * `-k, --keep`: keep existing tarball (don't run a `tar` command)
 * `-n, --no-voms`: don't check for a VOMS grid proxy (proxy line is removed from JDL template, CMSSW environment via xrdcp not allowed)
 * `-t, --cmssw-method [method]`: how to get CMSSW env: transfer, cmsrel, or address for xrdcp (default = transfer)
+* `--scram-workaround`: avoid using `scram b ProjectRename` when setting up a CMSSW tarball
 
 The arguments for the default [step1.sh](./scripts/step1.sh) are:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
@@ -241,6 +242,7 @@ Default step1 options:
 * `-k, --keep`: keep existing tarball (don't run a `tar` command)
 * `-n, --no-voms`: don't check for a VOMS grid proxy (proxy line is removed from JDL template, CMSSW environment via xrdpc not allowed)
 * `-t, --cmssw-method [method]`: how to get CMSSW env: transfer, cmsrel, or address for xrdcp (default = transfer)
+* `--scram-workaround`: avoid using `scram b ProjectRename` when setting up a CMSSW tarball
 
 Default extra options:
 * `--jdl [filename]`: name of JDL template file for job

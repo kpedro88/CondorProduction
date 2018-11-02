@@ -196,6 +196,7 @@ class jobSubmitter(object):
         parser.add_option("-k", "--keep", dest="keep", default=False, action="store_true", help="keep existing tarball for job submission (default = %default)")
         parser.add_option("-n", "--no-voms", dest="novoms", default=False, action="store_true", help="skip check and use of voms proxy (default = %default)")
         parser.add_option("-t", "--cmssw-method", dest="cmsswMethod", default="transfer", help="how to get CMSSW env: transfer, cmsrel, or address for xrdcp (default = %default)")
+        parser.add_option("--scram-workaround", dest="scramWorkaround", default=False, action="store_true", help="workaround for scram ProjectRename bug (default = %default)")
 
     def checkStep1Options(self,options,parser):
         if options.cmsswMethod!="transfer" and options.cmsswMethod!="cmsrel" and not options.cmsswMethod.startswith("root://"):
@@ -265,7 +266,7 @@ class jobSubmitter(object):
         # command line args for step1
         cmsswver = os.getenv("CMSSW_VERSION")
         step1args = "-C "+cmsswver
-        if self.cmsswMethod != "transfer":
+        if self.cmsswMethod != "transfer" or self.scramWorkaround:
             # xrdcp needs input dir, cmsrel needs scram arch
             step1args += " -L "+(self.cmsswMethod if self.cmsswMethod.startswith("root://") else os.getenv("SCRAM_ARCH"))
         job.patterns["STEP1ARGS"] = step1args
