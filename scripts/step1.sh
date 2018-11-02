@@ -12,7 +12,7 @@ export CMSSWXRD=""
 export OPTIND=1
 while [[ $OPTIND -lt $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":C:L:" opt
+	getopts ":C:L:X:" opt
 	case "$opt" in
 		C) export CMSSWVER=$OPTARG
 		;;
