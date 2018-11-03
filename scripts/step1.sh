@@ -46,7 +46,7 @@ if [[ "$CMSSWXRD" == root:* ]]; then
 fi
 if [ -n "$CMSSWLOC" ]; then
 	echo "Getting CMSSW via cmsrel"
-	export SCRAM_ARCH ${CMSSWLOC}
+	export SCRAM_ARCH=${CMSSWLOC}
 fi
 
 # use a tarball if we have it, otherwise make a new release area
