@@ -9,7 +9,6 @@ Currently in an alpha state of development; caveat emptor.
 
 Table of Contents
 =================
-
 * [Installation](#installation)
 * [Job submission](#job-submission)
    * [Modes of operation](#modes-of-operation)
@@ -18,6 +17,7 @@ Table of Contents
       * [Prepare mode](#prepare-mode)
       * [Submit mode](#submit-mode)
       * [Missing mode](#missing-mode)
+      * [Clean mode](#clean-mode)
    * [Job steps](#job-steps)
       * [Step1](#step1)
          * [CMSSW tarball creation](#cmssw-tarball-creation)
