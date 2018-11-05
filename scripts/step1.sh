@@ -42,7 +42,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh
 # three ways to get CMSSW: tarball transferred by condor, tarball transferred by xrdcp (address provided), new release (SCRAM_ARCH provided)
 if [[ "$CMSSWXRD" == root:* ]]; then
 	echo "Getting CMSSW via xrdcp"
-	xrdcp ${CMSSWXRD}/${CMSSWVER}.tar.gz .
+	xrdcp -f ${CMSSWXRD}/${CMSSWVER}.tar.gz .
 fi
 if [ -n "$CMSSWLOC" ]; then
 	echo "Getting CMSSW via cmsrel"
