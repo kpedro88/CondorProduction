@@ -308,6 +308,7 @@ It uses a number of command line options to specify how to display job informati
 * `-w, --why`: show why a job was held
 * `-m, --matched`: show site and machine to which the job matched (for CMS Connect)
 * `-p, --progress`: show job progress (time and nevents)
+* `-R, --remote`: access remote schedds
 * `--add-sites=ADDSITES`: comma-separated list of global pool sites to add
 * `--rm-sites=RMSITES`: comma-separated list of global pool sites to remove
 * `--stuck-threshold [num]`: threshold in hours to define stuck jobs (default = 12)

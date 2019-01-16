@@ -69,23 +69,27 @@ def getJob(options,result,jobs,scheddurl=""):
         else: return
     jobs.append(CondorJob(result,scheddurl))
 
+def getSchedd(scheddurl,coll=""):
+    if len(scheddurl)>0:
+        try:
+            if len(coll)>0: coll = htcondor.Collector(coll)
+            else: coll = htcondor.Collector() # defaults to local
+            scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, scheddurl)
+            schedd = htcondor.Schedd(scheddAd)
+        except:
+            print "Warning: could not locate schedd "+scheddurl
+            return None
+    else:
+        schedd = htcondor.Schedd() # defaults to local
+    return schedd
+
 def getJobs(options, scheddurl=""):
     constraint = 'Owner=="'+options.user+'"'
     if options.held: constraint += ' && JobStatus==5'
     elif options.running: constraint += ' && JobStatus==2'
     elif options.idle: constraint += ' && JobStatus==1'
 
-    if len(scheddurl)>0:
-        try:
-            if len(options.coll)>0: coll = htcondor.Collector(options.coll)
-            else: coll = htcondor.Collector() # defaults to local
-            scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, scheddurl)
-            schedd = htcondor.Schedd(scheddAd)
-        except:
-            print "Warning: could not locate schedd "+scheddurl
-            return []
-    else:
-        schedd = htcondor.Schedd() # defaults to local
+    schedd = getSchedd(scheddurl,options.coll)
 
     # get info for selected jobs
     jobs = []
@@ -109,6 +113,81 @@ def printJobs(jobs, num=False, prog=False, stdout=False, why=False, matched=Fals
         (" : "+j.why if why and len(j.why)>0 else "")
         for j in jobs
     ])
+
+def resubmitJobs(jobs,options,scheddurl=""):
+    # get scheduler
+    schedd = getSchedd(scheddurl,options.coll)
+    # process edits from JSON into dict
+    edits = {}
+    if len(options.edit)>0:
+        try:
+            edits = json.loads(options.edit)
+        except:
+            print "edit not specified in JSON format! Exiting."
+            sys.exit(1)
+    # create backup dir if desired
+    backup_dir = ""
+    tmp_dir = ""
+    if len(options.dir)>0:
+        backup_dir = options.dir+"/backup"
+        if not os.path.isdir(backup_dir):
+            os.mkdir(backup_dir)
+        tmp_dir = options.dir+"/tmp"
+        if not os.path.isdir(tmp_dir):
+            os.mkdir(tmp_dir)
+    # actions that must be done per-job
+    for j in jobs:
+        logfile = options.dir+"/"+j.stdout+".stdout"
+        # hold running jobs first (in case hung)
+        if j.status==2:
+            if len(options.dir)>0:
+                logfile = tmp_dir+"/"+j.stdout+".stdout"
+                # generate a backup log from condor_tail
+                cmdt = "condor_tail -maxbytes 10000000 "+j.num
+                with open(logfile,'w') as logf:
+                    subprocess.Popen(cmdt, shell=True, stdout=logf, stderr=subprocess.PIPE).communicate()
+            schedd.act(htcondor.JobAction.Hold,[j.num])
+        # backup log
+        if len(options.dir)>0 and not options.idle:
+            prev_logs = glob.glob(backup_dir+"/"+j.stdout+"_*")
+            num_logs = 0
+            # increment log number if job has been resubmitted before
+            if len(prev_logs)>0:
+                num_logs = max([int(log.split("_")[-1].replace(".stdout","")) for log in prev_logs])+1
+            # copy logfile
+            if os.path.isfile(logfile):
+                shutil.copy2(logfile,backup_dir+"/"+j.stdout+"_"+str(num_logs)+".stdout")
+        # edit redirector
+        if len(options.xrootd)>0:
+            args = j.args.split(' ')
+            args = [a.replace('"','').rstrip() for a in args]
+            # assumption: "-x" argument used for redirector
+            try:
+                args[args.index("-x")+1] = options.xrootd
+            except:
+                args.extend(["-x",options.xrootd])
+            schedd.edit([j.num],"Args",'"'+" ".join(args[:])+'"')
+    # actions that can be applied to all jobs
+    jobnums = [j.num for j in jobs]
+    # reset counts to avoid removal
+    schedd.edit(jobnums,"NumShadowStarts","0")
+    schedd.edit(jobnums,"NumJobStarts","0")
+    schedd.edit(jobnums,"JobRunCount","0")
+    # change sites if desired
+    # takes site list from the first job
+    if len(options.addsites)>0 or len(options.rmsites)>0:
+        sitelist = filter(None,jobs[0].sites.split(','))
+        for addsite in options.addsites:
+            if not addsite in sitelist: sitelist.append(addsite)
+        for rmsite in options.rmsites:
+            if rmsite in sitelist: del sitelist[sitelist.index(rmsite)]
+        schedd.edit(jobnums,"DESIRED_Sites",'"'+','.join(sitelist)+'"')
+    # any other classad edits
+    for editname,editval in edits.iteritems():
+        schedd.edit(jobnums,str(editname),str(editval))
+    # release jobs (unless idle - then no need to release)
+    if not options.idle:
+        schedd.act(htcondor.JobAction.Release,jobnums)
 
 def manageJobs(argv=None):
     if argv is None: argv = sys.argv[1:]
@@ -134,6 +213,7 @@ def manageJobs(argv=None):
     parser.add_option("-w", "--why", dest="why", default=False, action="store_true", help="show why a job was held (default = %default)")
     parser.add_option("-m", "--matched", dest="matched", default=False, action="store_true", help="show site and machine to which the job matched (default = %default)")
     parser.add_option("-p", "--progress", dest="progress", default=False, action="store_true", help="show job progress (time and nevents) (default = %default)")
+    parser.add_option("-R", "--remote", dest="remote", default=False, action="store_true", help="access remote schedds (default = %default)")
     parser.add_option("--add-sites", dest="addsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to add (default = %default)')
     parser.add_option("--rm-sites", dest="rmsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to remove (default = %default)')
     parser.add_option("--stuck-threshold", dest="stuckThreshold", default=12, help="threshold in hours to define stuck jobs (default = %default)")
@@ -154,7 +234,7 @@ def manageJobs(argv=None):
         parser.error("Options -h, -r, -i, -f are exclusive, pick one!")
     if options.resubmit and options.kill:
         parser.error("Can't use -s and -k together, pick one!")
-    if options.all and not has_paramiko and (options.kill or options.resubmit):
+    if options.all and not options.remote and not has_paramiko and (options.kill or options.resubmit):
         parser.error("Can't use job modification options (-s, -k) with -a without paramiko and gssapi.")
     if len(options.xrootd)>0 and options.xrootd[0:7] != "root://" and options.xrootd[0] != "T":
         parser.error("Improper xrootd address: "+options.xrootd)
@@ -175,131 +255,47 @@ def manageJobs(argv=None):
         options.resubmit = False
         options.kill = False
         
-    jobs = []
-    if options.all:
-        # loop over schedulers
-        all_nodes = parser_dict["schedds"]["fnal"].split(',')
-        for sch in all_nodes:
-            jobs_tmp = getJobs(options,sch)
-            if len(jobs_tmp)>0:
-                print sch
-                if options.resubmit:
-                    # ssh to local for modification access to scheduler
-                    client = paramiko.SSHClient()
-                    # use kerberos authentication
-                    client.connect(sch,gss_host=sch,gss_auth=True,gss_kex=True)
-                    # sanitize arguments
-                    if "-e" in sys.argv:
-                        eindex = sys.argv.index("-e")+1
-                        sys.argv[eindex] = "'"+sys.argv[eindex]+"'"
-                    if "-g" in sys.argv:
-                        gindex = sys.argv.index("-g")+1
-                        sys.argv[gindex] = "'"+sys.argv[gindex]+"'"
-                    if "-v" in sys.argv:
-                        vindex = sys.argv.index("-v")+1
-                        sys.argv[vindex] = "'"+sys.argv[vindex]+"'"
-                    # recursive run
-                    client.exec_command("cd "+os.getcwd())
-                    stdin, stdout, stderr = client.exec_command("python "+sys.argv[0]+" --ssh "+' '.join(sys.argv[1:]))
-                    stdoutlines = stdout.readlines()
-                    stderrlines = stderr.readlines()
-                    print ''.join(stdoutlines)
-                    stderrlinesjoined = ''.join(stderrlines)
-                    if len(stderrlinesjoined)>1: print stderrlinesjoined
-                    client.close()
-                else:
-                    printJobs(jobs_tmp,options.num,options.progress,options.stdout,options.why,options.matched)
-        # end here
-        sys.exit()
-    else:
-        jobs = getJobs(options)
-        printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
+	all_nodes = [""]
+    if options.all: all_nodes = parser_dict["schedds"]["fnal"].split(',')
+    for sch in all_nodes:
+        jobs = getJobs(options,sch)
+        if len(jobs)>0:
+            if len(sch)>0: print sch
+            if options.resubmit and not options.remote:
+                # ssh to local for modification access to scheduler
+                client = paramiko.SSHClient()
+                # use kerberos authentication
+                client.connect(sch,gss_host=sch,gss_auth=True,gss_kex=True)
+                # sanitize arguments
+                if "-e" in sys.argv:
+                    eindex = sys.argv.index("-e")+1
+                    sys.argv[eindex] = "'"+sys.argv[eindex]+"'"
+                if "-g" in sys.argv:
+                    gindex = sys.argv.index("-g")+1
+                    sys.argv[gindex] = "'"+sys.argv[gindex]+"'"
+                if "-v" in sys.argv:
+                    vindex = sys.argv.index("-v")+1
+                    sys.argv[vindex] = "'"+sys.argv[vindex]+"'"
+                # recursive run
+                client.exec_command("cd "+os.getcwd())
+                stdin, stdout, stderr = client.exec_command("python "+sys.argv[0]+" --ssh "+' '.join(sys.argv[1:]))
+                stdoutlines = stdout.readlines()
+                stderrlines = stderr.readlines()
+                print ''.join(stdoutlines)
+                stderrlinesjoined = ''.join(stderrlines)
+                if len(stderrlinesjoined)>1: print stderrlinesjoined
+                client.close()
+            else:
+                printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
 
-    # exit if no jobs found
-    if len(jobs)==0: return
+            # resubmit or remove jobs
+            if options.resubmit:
+                resubmitJobs(jobs,options,sch)
+            elif options.kill:
+                # actions that can be applied to all jobs
+                jobnums = [j.num for j in jobs]
+                schedd.act(htcondor.JobAction.Remove,jobnums)
 
-    # resubmit jobs
-    if options.resubmit:
-        # get scheduler
-        schedd = htcondor.Schedd() # defaults to local
-        # process edits from JSON into dict
-        edits = {}
-        if len(options.edit)>0:
-            try:
-                edits = json.loads(options.edit)
-            except:
-                print "edit not specified in JSON format! Exiting."
-                sys.exit(1)
-        # create backup dir if desired
-        backup_dir = ""
-        tmp_dir = ""
-        if len(options.dir)>0:
-            backup_dir = options.dir+"/backup"
-            if not os.path.isdir(backup_dir):
-                os.mkdir(backup_dir)
-            tmp_dir = options.dir+"/tmp"
-            if not os.path.isdir(tmp_dir):
-                os.mkdir(tmp_dir)
-        # actions that must be done per-job
-        for j in jobs:
-            logfile = options.dir+"/"+j.stdout+".stdout"
-            # hold running jobs first (in case hung)
-            if j.status==2:
-                if len(options.dir)>0:
-                    logfile = tmp_dir+"/"+j.stdout+".stdout"
-                    # generate a backup log from condor_tail
-                    cmdt = "condor_tail -maxbytes 10000000 "+j.num
-                    with open(logfile,'w') as logf:
-                        subprocess.Popen(cmdt, shell=True, stdout=logf, stderr=subprocess.PIPE).communicate()
-                schedd.act(htcondor.JobAction.Hold,[j.num])
-            # backup log
-            if len(options.dir)>0 and not options.idle:
-                prev_logs = glob.glob(backup_dir+"/"+j.stdout+"_*")
-                num_logs = 0
-                # increment log number if job has been resubmitted before
-                if len(prev_logs)>0:
-                    num_logs = max([int(log.split("_")[-1].replace(".stdout","")) for log in prev_logs])+1
-                # copy logfile
-                if os.path.isfile(logfile):
-                    shutil.copy2(logfile,backup_dir+"/"+j.stdout+"_"+str(num_logs)+".stdout")
-            # edit redirector
-            if len(options.xrootd)>0:
-                args = j.args.split(' ')
-                args = [a.replace('"','').rstrip() for a in args]
-                # assumption: "-x" argument used for redirector
-                try:
-                    args[args.index("-x")+1] = options.xrootd
-                except:
-                    args.extend(["-x",options.xrootd])
-                schedd.edit([j.num],"Args",'"'+" ".join(args[:])+'"')
-        # actions that can be applied to all jobs
-        jobnums = [j.num for j in jobs]
-        # reset counts to avoid removal
-        schedd.edit(jobnums,"NumShadowStarts","0")
-        schedd.edit(jobnums,"NumJobStarts","0")
-        schedd.edit(jobnums,"JobRunCount","0")
-        # change sites if desired
-        # takes site list from the first job
-        if len(options.addsites)>0 or len(options.rmsites)>0:
-            sitelist = filter(None,jobs[0].sites.split(','))
-            for addsite in options.addsites:
-                if not addsite in sitelist: sitelist.append(addsite)
-            for rmsite in options.rmsites:
-                if rmsite in sitelist: del sitelist[sitelist.index(rmsite)]
-            schedd.edit(jobnums,"DESIRED_Sites",'"'+','.join(sitelist)+'"')
-        # any other classad edits
-        for editname,editval in edits.iteritems():
-            schedd.edit(jobnums,str(editname),str(editval))
-        # release jobs (unless idle - then no need to release)
-        if not options.idle:
-            schedd.act(htcondor.JobAction.Release,jobnums)
-    # or remove jobs
-    elif options.kill:
-        # get scheduler
-        schedd = htcondor.Schedd() # defaults to local
-        # actions that can be applied to all jobs
-        jobnums = [j.num for j in jobs]
-        schedd.act(htcondor.JobAction.Remove,jobnums)
 
 if __name__=="__main__":
     manageJobs()
