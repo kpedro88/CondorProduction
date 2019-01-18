@@ -26,7 +26,8 @@ class CondorJob(object):
         self.num = str(result["ClusterId"])+"."+str(result["ProcId"])
         self.schedd = schedd
         self.why = result["HoldReason"] if "HoldReason" in result.keys() else ""
-        self.args = result["Args"]
+        self.argtype = "Args" if "Args" in result.keys() else "Arguments" if "Arguments" in result.keys() else ""
+        self.args = result[self.argtype] if len(self.argtype)>0 else ""
         self.status = int(result["JobStatus"]) # 2 is running, 5 is held, 1 is idle
         self.sites = result["DESIRED_Sites"] if "DESIRED_Sites" in result.keys() else ""
         if self.sites==classad.Value.Undefined: self.sites = ""
@@ -93,7 +94,7 @@ def getJobs(options, scheddurl=""):
 
     # get info for selected jobs
     jobs = []
-    props = ["ClusterId","ProcId","HoldReason","Out","Args","JobStatus","ServerTime","ChirpCMSSWLastUpdate","ChirpCMSSWElapsed","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
+    props = ["ClusterId","ProcId","HoldReason","Out","Args","Arguments","JobStatus","ServerTime","ChirpCMSSWLastUpdate","ChirpCMSSWElapsed","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
     if options.finished>0:
         for result in schedd.history(constraint,props,options.finished):
             getJob(options,result,jobs,scheddurl)
@@ -166,7 +167,7 @@ def resubmitJobs(jobs,options,scheddurl=""):
                 args[args.index("-x")+1] = options.xrootd
             except:
                 args.extend(["-x",options.xrootd])
-            schedd.edit([j.num],"Args",'"'+" ".join(args[:])+'"')
+            schedd.edit([j.num],j.argtype,'"'+" ".join(args[:])+'"')
     # actions that can be applied to all jobs
     jobnums = [j.num for j in jobs]
     # reset counts to avoid removal
