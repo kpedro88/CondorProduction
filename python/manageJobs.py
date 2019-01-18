@@ -292,6 +292,8 @@ def manageJobs(argv=None):
             if options.resubmit:
                 resubmitJobs(jobs,options,sch)
             elif options.kill:
+                # get scheduler
+                schedd = getSchedd(sch,options.coll)
                 # actions that can be applied to all jobs
                 jobnums = [j.num for j in jobs]
                 schedd.act(htcondor.JobAction.Remove,jobnums)
