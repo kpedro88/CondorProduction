@@ -251,6 +251,8 @@ def manageJobs(argv=None):
             options.xrootd = options.xrootd+"/store/test/xrootd/"+sitename
     if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
         options.all = False
+    if options.remote:
+        options.all = True
     if options.finished>0:
         options.resubmit = False
         options.kill = False
