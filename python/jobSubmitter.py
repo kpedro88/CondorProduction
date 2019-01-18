@@ -413,7 +413,9 @@ class jobSubmitter(object):
         constraint = ""
         if len(self.user)>0: constraint += 'Owner=="'+self.user+'"'
         for cname, collector in parser_dict["collectors"].iteritems():
-            if len(collector)==0: continue
+            if len(collector)==0:
+#                continue
+                 coll = htcondor.Collector()
             if cname not in parser_dict["schedds"]:
                 print "Error: no schedds provided for collector "+cname+", so it will be skipped."
             else:
@@ -427,6 +429,7 @@ class jobSubmitter(object):
                 except:
                     print "Warning: could not locate schedd "+sch
         
+		print runSet
         return runSet
             
     def makeResubmit(self):

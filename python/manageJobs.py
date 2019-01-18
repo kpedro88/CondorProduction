@@ -255,8 +255,8 @@ def manageJobs(argv=None):
         options.resubmit = False
         options.kill = False
         
-	all_nodes = [""]
     if options.all: all_nodes = parser_dict["schedds"]["fnal"].split(',')
+    else: all_nodes = [""]
     for sch in all_nodes:
         jobs = getJobs(options,sch)
         if len(jobs)>0:
