@@ -410,14 +410,18 @@ class jobSubmitter(object):
             print '"Missing jobs" check will not consider running jobs.'
             return runSet
         
-        constraint = ""
-        if len(self.user)>0: constraint += 'Owner=="'+self.user+'"'
+        # exclude removed jobs
+        constraint = "JobStatus!=3"
+        if len(self.user)>0: constraint += ' && Owner=="'+self.user+'"'
         for cname, collector in parser_dict["collectors"].iteritems():
-            if len(collector)==0: continue
             if cname not in parser_dict["schedds"]:
                 print "Error: no schedds provided for collector "+cname+", so it will be skipped."
+                continue
             else:
-                coll = htcondor.Collector(collector)
+                if len(collector)==0:
+                    coll = htcondor.Collector()
+                else:
+                    coll = htcondor.Collector(collector)
             for sch in parser_dict["schedds"][cname].split(','):
                 try:
                     scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
@@ -427,6 +431,7 @@ class jobSubmitter(object):
                 except:
                     print "Warning: could not locate schedd "+sch
         
+		print runSet
         return runSet
             
     def makeResubmit(self):

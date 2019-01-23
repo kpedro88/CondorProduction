@@ -1,10 +1,10 @@
 [common]
 scripts = checkVomsTar.sh,jobExecCondor.jdl,jobExecCondor.sh,step1.sh
 [collectors]
-fnal = cmssrv208.fnal.gov,cmssrv223.fnal.gov
+fnal = cmssrv268.fnal.gov,cmssrv605.fnal.gov
 cmscon = login.uscms.org
 [schedds]
-fnal = cmslpc23.fnal.gov,cmslpc24.fnal.gov,cmslpc25.fnal.gov,cmslpc26.fnal.gov,cmslpc27.fnal.gov,cmslpc28.fnal.gov,cmslpc29.fnal.gov,cmslpc30.fnal.gov,cmslpc31.fnal.gov,cmslpc32.fnal.gov,cmslpc33.fnal.gov,cmslpc34.fnal.gov,cmslpc35.fnal.gov,cmslpc36.fnal.gov,cmslpc37.fnal.gov,cmslpc38.fnal.gov,cmslpc39.fnal.gov,cmslpc41.fnal.gov,cmslpc42.fnal.gov
+fnal = lpcschedd1.fnal.gov,lpcschedd2.fnal.gov,lpcschedd3.fnal.gov
 cmscon = login.uscms.org
 [caches]
 $CMSSW_BASE/tmp = 1
