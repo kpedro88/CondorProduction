@@ -7,16 +7,6 @@ if condorPath not in sys.path and os.path.isdir(condorPath):
     sys.path.append(condorPath)
 import htcondor,classad
 
-has_paramiko = True
-try:
-    import paramiko
-except:
-    has_paramiko = False
-try:
-    import gssapi
-except:
-    has_paramiko = False
-
 from parseConfig import list_callback, parser_dict
 
 class CondorJob(object):
@@ -214,7 +204,6 @@ def manageJobs(argv=None):
     parser.add_option("-w", "--why", dest="why", default=False, action="store_true", help="show why a job was held (default = %default)")
     parser.add_option("-m", "--matched", dest="matched", default=False, action="store_true", help="show site and machine to which the job matched (default = %default)")
     parser.add_option("-p", "--progress", dest="progress", default=False, action="store_true", help="show job progress (time and nevents) (default = %default)")
-    parser.add_option("-R", "--remote", dest="remote", default=False, action="store_true", help="access remote schedds (default = %default)")
     parser.add_option("--add-sites", dest="addsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to add (default = %default)')
     parser.add_option("--rm-sites", dest="rmsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to remove (default = %default)')
     parser.add_option("--stuck-threshold", dest="stuckThreshold", default=12, help="threshold in hours to define stuck jobs (default = %default)")
@@ -235,8 +224,6 @@ def manageJobs(argv=None):
         parser.error("Options -h, -r, -i, -f are exclusive, pick one!")
     if options.resubmit and options.kill:
         parser.error("Can't use -s and -k together, pick one!")
-    if options.all and not options.remote and not has_paramiko and (options.kill or options.resubmit):
-        parser.error("Can't use job modification options (-s, -k) with -a without paramiko and gssapi.")
     if len(options.xrootd)>0 and options.xrootd[0:7] != "root://" and options.xrootd[0] != "T":
         parser.error("Improper xrootd address: "+options.xrootd)
     if len(options.user)==0:
@@ -252,8 +239,6 @@ def manageJobs(argv=None):
             options.xrootd = options.xrootd+"/store/test/xrootd/"+sitename
     if options.ssh or "cmslpc" not in os.uname()[1]: # sometimes "all" shouldn't be used
         options.all = False
-    if options.remote:
-        options.all = True
     if options.finished>0:
         options.resubmit = False
         options.kill = False
@@ -264,32 +249,7 @@ def manageJobs(argv=None):
         jobs = getJobs(options,sch)
         if len(jobs)>0:
             if len(sch)>0: print sch
-            if options.resubmit and not options.remote:
-                # ssh to local for modification access to scheduler
-                client = paramiko.SSHClient()
-                # use kerberos authentication
-                client.connect(sch,gss_host=sch,gss_auth=True,gss_kex=True)
-                # sanitize arguments
-                if "-e" in sys.argv:
-                    eindex = sys.argv.index("-e")+1
-                    sys.argv[eindex] = "'"+sys.argv[eindex]+"'"
-                if "-g" in sys.argv:
-                    gindex = sys.argv.index("-g")+1
-                    sys.argv[gindex] = "'"+sys.argv[gindex]+"'"
-                if "-v" in sys.argv:
-                    vindex = sys.argv.index("-v")+1
-                    sys.argv[vindex] = "'"+sys.argv[vindex]+"'"
-                # recursive run
-                client.exec_command("cd "+os.getcwd())
-                stdin, stdout, stderr = client.exec_command("python "+sys.argv[0]+" --ssh "+' '.join(sys.argv[1:]))
-                stdoutlines = stdout.readlines()
-                stderrlines = stderr.readlines()
-                print ''.join(stdoutlines)
-                stderrlinesjoined = ''.join(stderrlines)
-                if len(stderrlinesjoined)>1: print stderrlinesjoined
-                client.close()
-            else:
-                printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
+            printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
 
             # resubmit or remove jobs
             if options.resubmit:

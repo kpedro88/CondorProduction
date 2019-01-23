@@ -308,7 +308,6 @@ It uses a number of command line options to specify how to display job informati
 * `-w, --why`: show why a job was held
 * `-m, --matched`: show site and machine to which the job matched (for CMS Connect)
 * `-p, --progress`: show job progress (time and nevents)
-* `-R, --remote`: access remote schedds
 * `--add-sites=ADDSITES`: comma-separated list of global pool sites to add
 * `--rm-sites=RMSITES`: comma-separated list of global pool sites to remove
 * `--stuck-threshold [num]`: threshold in hours to define stuck jobs (default = 12)
@@ -360,8 +359,7 @@ to check the list of running jobs. It will try very hard to find the Condor pyth
 it will simply skip the check of running jobs.
 
 In contrast, `manageJobs` absolutely depends on the Condor python bindings. It will also try very hard to find them,
-but if they are not available, it cannot run. It also has optional dependencies on [paramiko](http://www.paramiko.org/) and
-[python-gssapi](https://pypi.python.org/pypi/python-gssapi/0.6.4), which are needed for the script to run itself over ssh.
+but if they are not available, it cannot run.
 
 For more information about global pool sites, see 
 [Selecting Sites - CMS Connect Handbook](https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
