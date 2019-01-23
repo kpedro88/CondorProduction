@@ -431,7 +431,6 @@ class jobSubmitter(object):
                 except:
                     print "Warning: could not locate schedd "+sch
         
-		print runSet
         return runSet
             
     def makeResubmit(self):
