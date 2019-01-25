@@ -315,8 +315,7 @@ It uses a number of command line options to specify how to display job informati
 * `--help`: show help message and exit
 
 The options `-h`, `-i`, `-r`, `-f` are exclusive. The options `-s` and `-k` are also exclusive. The option `-a` is currently only supported
-at the LPC (where each interactive node has its own scheduler). The script can ssh to each node and run itself to modify the jobs
-on that node (because each scheduler can only be accessed for write operations from its respective node).
+at the LPC (where there are three remote schedulers).
 
 ## Configuration
 
