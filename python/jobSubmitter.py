@@ -387,9 +387,9 @@ class jobSubmitter(object):
 
     def tryToGetCondor(self):
         # try to find condor bindings
-        condorPath = "/usr/lib64/python2.6/site-packages"
-        if condorPath not in sys.path and os.path.isdir(condorPath):
-            sys.path.append(condorPath)
+        for condorPath in ["/usr/lib64/python2.6/site-packages", "/usr/lib64/python2.7/site-packages"]
+            if condorPath not in sys.path and os.path.isdir(condorPath):
+                sys.path.append(condorPath)
         # try to import condor bindings
         try:
             global htcondor,classad

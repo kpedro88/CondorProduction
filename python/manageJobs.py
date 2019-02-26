@@ -2,9 +2,9 @@ import sys,os,subprocess,glob,shutil,json
 from optparse import OptionParser
 
 # try to find condor bindings
-condorPath = "/usr/lib64/python2.6/site-packages"
-if condorPath not in sys.path and os.path.isdir(condorPath):
-    sys.path.append(condorPath)
+for condorPath in ["/usr/lib64/python2.6/site-packages", "/usr/lib64/python2.7/site-packages"]
+    if condorPath not in sys.path and os.path.isdir(condorPath):
+        sys.path.append(condorPath)
 import htcondor,classad
 
 from parseConfig import list_callback, parser_dict
