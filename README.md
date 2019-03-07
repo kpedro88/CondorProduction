@@ -167,9 +167,14 @@ assumption can be changed easily.)
 The Condor executable script is [jobExecCondor.sh](./scripts/jobExecCondor.sh), which runs the subroutine scripts
 [step1.sh](./scripts/step1.sh), `step2.sh` (user provided), etc. Each subroutine script is sourced and 
 the command line arguments are reused (processed by bash `getopts`). Because of this, a special syntax is used with `getopts`
-to avoid failing on an unknown option. The executable script also provides a bash helper function, `getFromClassAd`, that can be used
-to parse information from the Condor ClassAds for each job. This can be used, for example, to check the number of
+to avoid failing on an unknown option.
+
+The executable script also provides some bash helper functions.
+* `getFromClassAd`: parses information from the Condor ClassAds for each job. This can be used, for example, to check the number of
 requested CPUs when running a multicore job.
+* `stageOut`: copies a local file to a storage element using `xrdcp`. It can retry a specified number of times,
+with a specified wait time that increases with each retry. This helps avoid job failure from a temporarily interrupted connection
+or unavailable storage element.
 
 The form of these scripts is tightly coupled with the operations of `jobSubmitter`.
 Therefore, by default the scripts are not specified as command-line arguments in Python,
