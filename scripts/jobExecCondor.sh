@@ -8,6 +8,7 @@ stageOut() {
 	OUTPUT=""
 	XRDARGS=""
 	QUIET=0
+	GFAL=0
 
 	stageOut_usage() {
 		case `uname` in
@@ -22,13 +23,14 @@ stageOut() {
 		$ECHO "-o output     \toutput file name (required)"
 		$ECHO "-w wait       \twait time in seconds (default = $WAIT)"
 		$ECHO "-n num        \tnumber of repetitions (default = $NUMREP)"
-		$ECHO "-x args       \tany arguments to pass to xrdcp (should be quoted)"
+		$ECHO "-x args       \tany arguments to pass to xrdcp/gfal-copy (should be quoted)"
+		$ECHO "-g            \tUse gfal-copy rather than xrdcp"
 		$ECHO "-q            \tquiet (don't print any messages)"
 	}
 
 	# set vars used by getopts to local
 	local OPTIND OPTARG
-	while getopts "i:o:w:n:x:q" opt; do
+	while getopts "i:o:w:n:x:gq" opt; do
 		case "$opt" in
 		i) INPUT="$OPTARG"
 		;;
@@ -39,6 +41,8 @@ stageOut() {
 		n) NUMREP="$OPTARG"
 		;;
 		x) XRDARGS="$OPTARG"
+		;;
+		g) GFAL=1
 		;;
 		q) QUIET=1
 		;;
@@ -53,19 +57,23 @@ stageOut() {
 	# try to copy n times, increasing wait each time
 	TMPWAIT=0
 	for ((i=0; i < $NUMREP; i++)); do
-		xrdcp $XRDARGS $INPUT $OUTPUT
+		if [ $GFAL -eq 1 ]; then
+			gfal-copy $XRDARGS $INPUT $OUTPUT
+		else
+			xrdcp $XRDARGS $INPUT $OUTPUT
+		fi
 		XRDEXIT=$?
 		if [ $XRDEXIT -eq 0 ]; then
 			return 0
 		fi
 		# in case of bad exit, wait and try again
 		TMPWAIT=$(($TMPWAIT + $WAIT))
-		if [ $QUIET -eq 0 ]; then echo "Exit code $XRDEXIT, failure in xrdcp. Retry after $TMPWAIT seconds..."; fi
+		if [ $QUIET -eq 0 ]; then echo "Exit code $XRDEXIT, failure in xrdcp/gfal-copy. Retry after $TMPWAIT seconds..."; fi
 		sleep $TMPWAIT
 	done
 
 	# if we get here, it really didn't work
-	if [ $QUIET -eq 0 ]; then echo "xrdcp failed $NUMREP times. It might be an actual problem."; fi
+	if [ $QUIET -eq 0 ]; then echo "xrdcp/gfal-copy failed $NUMREP times. It might be an actual problem."; fi
 	return 60000
 }
 
