@@ -9,6 +9,7 @@ stageOut() {
 	XRDARGS=""
 	QUIET=0
 	GFAL=0
+	CMDSTR="xrdcp"
 
 	stageOut_usage() {
 		case `uname` in
@@ -43,6 +44,7 @@ stageOut() {
 		x) XRDARGS="$OPTARG"
 		;;
 		g) GFAL=1
+		   CMDSTR="gfal-copy"
 		;;
 		q) QUIET=1
 		;;
@@ -58,10 +60,8 @@ stageOut() {
 	TMPWAIT=0
 	for ((i=0; i < $NUMREP; i++)); do
 		if [ $GFAL -eq 1 ]; then
-			CMDSTR="gfal-copy"
 			gfal-copy $XRDARGS $INPUT $OUTPUT
 		else
-			CMDSTR="xrdcp"
 			xrdcp $XRDARGS $INPUT $OUTPUT
 		fi
 		XRDEXIT=$?
