@@ -290,6 +290,9 @@ class jobSubmitter(object):
         if os.uname()[1]=="login.uscms.org" and len(self.sites)>0:
             job.appends.append("+DESIRED_Sites = \""+self.sites+"\"")
             job.appends.append("+AvoidSystemPeriodicRemove = True")
+        # special option for UMD
+        if "umd.edu" in os.uname()[1]:
+            job.appends.append("Requirements = (TARGET.OpSysMajorVer == 6)")
         # left for the user: JOBNAME, EXTRAINPUTS, EXTRAARGS
         
     def generateJdl(self,job):
