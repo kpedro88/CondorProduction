@@ -56,7 +56,7 @@ class protoJob(object):
         self.nums = []
         self.jdl = ""
         self.name = "job"
-        
+
     def __repr__(self):
         line = (
             "protoJob:\n"
@@ -69,19 +69,19 @@ class protoJob(object):
             "\tnums = "+str(self.nums)
         )
         return line
-        
+
     def makeName(self,num):
         return self.name+"_"+str(num)
 
 class jobSubmitter(object):
     def __init__(self,argv=None,parser=None):
         if argv is None: argv = sys.argv[1:]
-        
+
         self.defaultStep1 = False
         self.scripts = ["step1.sh","step2.sh"]
         # dict of (string name, bool exclusive)
         self.modes = {}
-        
+
         # define parser
         if parser is None:
             parser = OptionParser(add_help_option=False)
@@ -102,7 +102,7 @@ class jobSubmitter(object):
         # set as members
         for key in options.__dict__:
             setattr(self,key,options.__dict__[key])
-        
+
         # other vars
         self.protoJobs = []
         self.jdlLines = []
@@ -113,10 +113,10 @@ class jobSubmitter(object):
 
     def run(self):
         self.initRun()
-        
+
         # job generation
         self.generateSubmission()
-        
+
         # loop over protojobs
         for job in self.protoJobs:
             self.runPerJob(job)
@@ -130,7 +130,7 @@ class jobSubmitter(object):
             self.initMissing()
         elif self.clean:
             self.initClean()
-        
+
     def runPerJob(self,job):
         if self.prepare:
             self.doPrepare(job)
@@ -144,7 +144,7 @@ class jobSubmitter(object):
             self.doMissing(job)
         elif self.clean:
             self.doClean(job)
-            
+
     def finishRun(self):
         if self.count:
             self.finishCount()
@@ -152,7 +152,7 @@ class jobSubmitter(object):
             self.finishMissing()
         elif self.clean:
             self.finishClean()
-            
+
     def addDefaultOptions(self,parser):
         # control options
         parser.add_option("-c", "--count", dest="count", default=False, action="store_true", help="count the expected number of jobs (default = %default)")
@@ -206,7 +206,7 @@ class jobSubmitter(object):
             options.keep = True
         if options.novoms and options.cmsswMethod.startswith("root://"):
             parser.error("Can't xrdcp CMSSW without voms proxy!")
-            
+
     def addExtraOptions(self,parser):
         # job options
         parser.add_option("--jdl", dest="jdl", default="jobExecCondor.jdl", help="JDL template file for job (default = %default)")
@@ -214,10 +214,10 @@ class jobSubmitter(object):
         parser.add_option("--memory", dest="memory", default=2000, help="specify amount of memory per job [MB] (default = %default)")
         parser.add_option("--cpus", dest="cpus", default=1, help="specify number of CPU threads per job (default = %default)")
         parser.add_option("--sites", dest="sites", default=parser_dict["submit"]["sites"], help="comma-separated list of sites for global pool running (default = %default)")
-        
+
     def checkExtraOptions(self,options,parser):
         pass
-        
+
     # in case you want to keep most but not all options from a section
     def removeOptions(self,parser,*options):
         for option in options:
@@ -226,7 +226,7 @@ class jobSubmitter(object):
 
     def generateSubmission(self):
         pass
-        
+
     def generatePerJob(self,job):
         self.generateDefault(job)
         self.generateStep1(job)
@@ -242,14 +242,14 @@ class jobSubmitter(object):
             if not self.keep and self.cmsswMethod.startswith("root://"): cmd += " -i "+self.cmsswMethod
             sp = subprocess.Popen(cmd, shell=True, stdin = sys.stdin, stdout = sys.stdout, stderr = sys.stderr)
             sp.wait()
-            
+
     def initMissing(self):
         # find finished jobs via output file list
         self.filesSet = self.findFinished()
-            
+
         # find running jobs from condor
         self.runSet = self.findRunning()
-        
+
     def initClean(self):
         self.initMissing()
         # subtract running jobs from finished jobs (in case resubmitted)
@@ -292,18 +292,21 @@ class jobSubmitter(object):
             job.appends.append("+AvoidSystemPeriodicRemove = True")
         # special option for UMD
         if "umd.edu" in os.uname()[1]:
-            job.appends.append("Requirements = (TARGET.OpSysMajorVer == 6)")
+            if 'slc7' in os.environ['SCRAM_ARCH']:
+                job.appends.append("Requirements = (TARGET.OpSysMajorVer == 7)")
+            else:
+                job.appends.append("Requirements = (TARGET.OpSysMajorVer == 6)")
         # left for the user: JOBNAME, EXTRAINPUTS, EXTRAARGS
-        
+
     def generateJdl(self,job):
         job.jdl = self.jdl.replace(".jdl","_"+job.name+".jdl")
-        
+
     def doCount(self,job):
         self.njobs += job.njobs
-        
+
     def finishCount(self):
         print str(self.njobs)+" jobs"
-        
+
     def doPrepare(self,job):
         # get template contents (move into separate fn/store in self?)
         if len(self.jdlLines)==0:
@@ -317,7 +320,7 @@ class jobSubmitter(object):
                 outfile.write(append_+"\n")
             if self.noQueueArg: outfile.write(job.queue.replace("-queue","Queue")+"\n")
             else: outfile.write("# "+job.queue.replace("-queue","Queue")+"\n")
-                
+
     def doSubmit(self,job):
         if os.path.isfile(job.jdl):
             if self.noQueueArg:
@@ -331,7 +334,7 @@ class jobSubmitter(object):
             os.system(cmd)
         else:
             print "Error: couldn't find "+job.jdl+", try running in prepare mode"
-        
+
     def doMissing(self,job):
         jobSet, jobDict = self.findJobs(job)
         # find difference
@@ -366,7 +369,7 @@ class jobSubmitter(object):
             jobSet.add(name)
             jobDict[name] = num
         return (jobSet, jobDict)
-                
+
     def finishMissing(self):
         # provide results
         if len(self.missingLines)>0:
@@ -376,10 +379,10 @@ class jobSubmitter(object):
                 print '\n'.join(self.missingLines)
         else:
             print "No missing jobs!"
-            
+
     def finishedToJobName(self,val):
         return val.split("/")[-1].replace(".root","")
-        
+
     def findFinished(self):
         # find finished jobs via output file list
         filesSet = set()
@@ -405,15 +408,15 @@ class jobSubmitter(object):
 
     def runningToJobName(self,val):
         return "_".join(val.replace(".stdout","").split('_')[:-1])
-        
+
     def findRunning(self):
         runSet = set()
-    
+
         hasCondor = self.tryToGetCondor()
         if not hasCondor:
             print '"Missing jobs" check will not consider running jobs.'
             return runSet
-        
+
         # exclude removed jobs
         constraint = "JobStatus!=3"
         if len(self.user)>0: constraint += ' && Owner=="'+self.user+'"'
@@ -434,9 +437,9 @@ class jobSubmitter(object):
                         runSet.add(self.runningToJobName(result["Out"]))
                 except:
                     print "Warning: could not locate schedd "+sch
-        
+
         return runSet
-            
+
     def makeResubmit(self):
         with open(self.resub,'w') as rfile:
             rfile.write("#!/bin/bash\n\n")
@@ -444,7 +447,7 @@ class jobSubmitter(object):
                 rfile.write(stmp+'\n')
         # make executable
         st = os.stat(rfile.name)
-        os.chmod(rfile.name, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)            
+        os.chmod(rfile.name, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def doClean(self,job):
         jobSet, jobDict = self.findJobs(job)
