@@ -225,8 +225,9 @@ A few other Python arguments are not explicitly included in the default setup, b
 * `-v, --verbose`: enable verbose output (could be a bool or an int, if different verbosity levels are desired)
 By default, missing mode will try to get a list of output files from the `output` option, if it exists.
 
-One shell argument is effectively reserved if the user wants to use the [job management](#job-management) tools:
+Some shell arguments are effectively reserved if the user wants to use the [job management](#job-management) tools:
 * `-x [redir]`: xrootd redirector address or site name (for reading input files)
+* `-f`: switch to change the structure by which the output files are stored; from a "single folder, all files" solution to a solution with the pattern \<dir>/\<era>/\<sample>/\<filename>.root (default=False)
 
 ### Summary of options
 
