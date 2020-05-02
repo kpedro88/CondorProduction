@@ -34,7 +34,7 @@ if [[ "${XRDIR}" == *"root://"* ]]; then
 	CMD="xrdcp"
 elif [[ "${XRDIR}" == *"gsiftp://"* ]]; then
 	CMD="env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy"
-elif [[ -n "${XRDIR}" ]
+elif [[ -n "${XRDIR}" ]]; then
 	echo "ERROR Unknown transfer protocol for the tarball"
 	exit 1
 fi
