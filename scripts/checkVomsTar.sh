@@ -3,6 +3,7 @@
 KEEPTAR=""
 XRDIR=""
 NOVOMS=""
+CMD=""
 # check arguments
 while getopts "nki:" opt; do
 	case "$opt" in
@@ -29,6 +30,15 @@ if [ -e ${CMSSW_VERSION}.tar.gz ]; then
 	ls -lth ${CMSSW_VERSION}.tar.gz
 fi
 
-if [ -n "$XRDIR" ]; then
-	xrdcp -f ${CMSSW_VERSION}.tar.gz ${XRDIR}/${CMSSW_VERSION}.tar.gz
+if [[ "${XRDIR}" == *"root://"* ]]; then
+	CMD="xrdcp"
+elif [[ "${XRDIR}" == *"gsiftp://"* ]]; then
+	CMD="env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy"
+elif [[ -n "${XRDIR}" ]]; then
+	echo "ERROR Unknown transfer protocol for the tarball"
+	exit 1
+fi
+
+if [ -n "$XRDIR" ] && [ -n "$CMD" ]; then
+	${CMD} -f ${CMSSW_VERSION}.tar.gz ${XRDIR}/${CMSSW_VERSION}.tar.gz
 fi
