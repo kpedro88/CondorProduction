@@ -60,7 +60,7 @@ stageOut() {
 	TMPWAIT=0
 	for ((i=0; i < $NUMREP; i++)); do
 		if [ $GFAL -eq 1 ]; then
-			gfal-copy $XRDARGS $INPUT $OUTPUT
+			env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy $XRDARGS $INPUT $OUTPUT
 		else
 			xrdcp $XRDARGS $INPUT $OUTPUT
 		fi
