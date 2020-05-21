@@ -1,6 +1,6 @@
 universe = vanilla
 Executable = jobExecCondor.sh
-+REQUIRED_OS = "rhel6"
++REQUIRED_OS = "OSVERSION"
 +DesiredOS = REQUIRED_OS
 request_disk = MYDISK
 request_memory = MYMEMORY
