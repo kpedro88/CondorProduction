@@ -282,6 +282,7 @@ class jobSubmitter(object):
 
     def generateExtra(self,job):
         job.patterns.update([
+            ("OSVERSION","rhel7" if "el7" in os.uname()[2] else "rhel6"),
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
             ("MYCPUS",self.cpus),
