@@ -288,7 +288,7 @@ class jobSubmitter(object):
             ("MYCPUS",self.cpus),
         ])
         # special option for CMS Connect
-        if os.uname()[1]=="login.uscms.org" and len(self.sites)>0:
+        if (os.uname()[1]=="login.uscms.org" or os.uname()[1]=="login-el7.uscms.org") and len(self.sites)>0:
             job.appends.append("+DESIRED_Sites = \""+self.sites+"\"")
             job.appends.append("+AvoidSystemPeriodicRemove = True")
         # special option for UMD
