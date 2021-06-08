@@ -23,11 +23,11 @@ Table of Contents
          * [CMSSW tarball creation](#cmssw-tarball-creation)
       * [Step2 and beyond](#step2-and-beyond)
    * [Summary of options](#summary-of-options)
-   * [Examples](#examples)
 * [Job management](#job-management)
 * [Job chains](#job-chain)
 * [Configuration](#configuration)
 * [Dependencies](#dependencies)
+* [Examples](#examples)
 
 (Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc))
 
@@ -281,11 +281,6 @@ none
 * `-x [redir]`: xrootd redirector address or site name (for reading input files)
 </details>
 
-### Examples
-
-* [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
-* [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
-
 ## Job management
 
 Jobs submitted with `jobSubmitter` and the default JDL file are set up so that they are held if they exit unsuccessfully
@@ -397,3 +392,11 @@ but if they are not available, it cannot run.
 
 For more information about global pool sites, see 
 [Selecting Sites - CMS Connect Handbook](https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
+
+## Examples
+
+* [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
+* [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
+* [SVJtagger](https://github.com/kpedro88/SVJtagger/tree/master/uBDT) - BDT training
+* [SimDenoising](https://github.com/kpedro88/SimDenoising) - simulated data generation
+* [SonicCMS](https://github.com/fastmachinelearning/SonicCMS/tree/v5.2.0/Brainwave) - ML inference
