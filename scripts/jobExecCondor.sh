@@ -113,8 +113,9 @@ done
 IFS="," read -a SCRIPTARRAY <<< "$SCRIPTS"
 
 # execute scripts in order
+TOPDIR=$PWD
 for SCRIPT in ${SCRIPTARRAY[@]}; do
-	cd $_CONDOR_SCRATCH_DIR
+	cd $TOPDIR
 	if [ -e ${SCRIPT} ]; then
 		echo "Executing ${SCRIPT}"
 		echo ""

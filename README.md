@@ -25,6 +25,7 @@ Table of Contents
    * [Summary of options](#summary-of-options)
    * [Examples](#examples)
 * [Job management](#job-management)
+* [Job chains](#job-chain)
 * [Configuration](#configuration)
 * [Dependencies](#dependencies)
 
@@ -322,6 +323,34 @@ It uses a number of command line options to specify how to display job informati
 The options `-h`, `-i`, `-r`, `-f` are exclusive. The options `-s` and `-k` are also exclusive. The option `-a` is currently only supported
 at the LPC (where each interactive node has its own scheduler). The script can ssh to each node and run itself to modify the jobs
 on that node (because each scheduler can only be accessed for write operations from its respective node).
+
+## Job chains
+
+Multiple jobs can be chained together in order to run in series.
+(This may be useful, for example, to avoid storing large intermediate output files, in order to reduce disk usage requirements.)
+A script [createChain.py](./python/createChain.py) is provided to create these chains from individual jobs.
+It produces an aggregated input tarball and corresponding JDL file that can be submitted using `condor_submit`
+and executes [jobExecCondorChain.sh](./scripts/jobExecCondorChain.sh).
+
+The aggregrate input tarball contains a directory for each job, named (in order) `job0`, `job1`, etc.
+Each job is executed in its own directory, with its own environment.
+This regular structure can be used during the preparation of the individual jobs;
+for example, `job1` can refer to the expected output file from `job0` using the relative path `../job0/[file]`.
+
+The python script's options are:
+* `-h, --help`: show help message and exit
+* `-n NAME, --name NAME`: name for chain job (required)
+* `-j JDLS [JDLS ...], --jdls JDLS [JDLS ...]`: full paths to JDL files (at least one required)
+* `-l LOG, --log LOG`: log name prefix from first job (will be replaced w/ chain job name)
+
+The shell script's options are:
+* `-J [jobname]`: name for chain job
+* `-N [number]`: number of jobs in chain
+
+Several caveats currently apply:
+* The argument `-q, --no-queue-arg` should be used when preparing individual jobs.
+* It is recommended to use the `xrdcp` method for transferring CMSSW environment in Step1 when preparing individual jobs.
+* The aggregate input tarball currently must be transferred via Condor, not via xrdcp.
 
 ## Configuration
 
