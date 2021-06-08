@@ -24,7 +24,7 @@ Table of Contents
       * [Step2 and beyond](#step2-and-beyond)
    * [Summary of options](#summary-of-options)
 * [Job management](#job-management)
-* [Job chains](#job-chain)
+* [Job chains](#job-chains)
 * [Configuration](#configuration)
 * [Dependencies](#dependencies)
 * [Examples](#examples)
@@ -345,7 +345,7 @@ The shell script's options are:
 Several caveats currently apply:
 * The argument `-q, --no-queue-arg` should be used when preparing individual jobs.
 * It is recommended to use the `xrdcp` method for transferring CMSSW environment in Step1 when preparing individual jobs.
-* The aggregate input tarball currently must be transferred via Condor, not via xrdcp.
+* The aggregate input tarball must be transferred via Condor, not via xrdcp.
 
 ## Configuration
 
@@ -398,5 +398,5 @@ For more information about global pool sites, see
 * [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
 * [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
 * [SVJtagger](https://github.com/kpedro88/SVJtagger/tree/master/uBDT) - BDT training
-* [SimDenoising](https://github.com/kpedro88/SimDenoising) - simulated data generation
+* [SimDenoising](https://github.com/kpedro88/SimDenoising#batch-submission) - simulated data generation
 * [SonicCMS](https://github.com/fastmachinelearning/SonicCMS/tree/v5.2.0/Brainwave) - ML inference
