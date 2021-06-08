@@ -398,6 +398,9 @@ For more information about global pool sites, see
 
 ## Examples
 
+A very basic example can be found in the [test](./test) directory.
+
+Other repositories that use this package include:
 * [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
 * [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
 * [SVJtagger](https://github.com/kpedro88/SVJtagger/tree/master/uBDT) - BDT training
