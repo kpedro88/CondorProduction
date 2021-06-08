@@ -116,14 +116,17 @@ TOPDIR=$PWD
 export SCRIPTS=""
 export USECONT=0
 export ARGCONT=""
+export INTERCHAIN=0
 while [[ $OPTIND -le $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":S:E:" opt
+	getopts ":S:E:I" opt
 	case "$opt" in
 		S) export SCRIPTS=$OPTARG
 		;;
 		E) export USECONT=1
 		   export ARGCONT="$OPTARG"
+		;;
+		I) export INTERCHAIN=1
 		;;
 		# keep going if getopts had an error
 		\? | :) OPTIND=$((OPTIND+1))

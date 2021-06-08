@@ -176,13 +176,13 @@ requested CPUs when running a multicore job.
 * `stageOut`: copies a local file to a storage element using `xrdcp`. It can retry a specified number of times,
 with a specified wait time that increases with each retry. This helps avoid job failure from a temporarily interrupted connection
 or unavailable storage element. It can also clean up by removing local files (upon successful or unsuccessful copying).
-It can be disabled for intermediate jobs in chains (see [Job chains](#job-chains) below).
+Staging out can be disabled for intermediate jobs in chains (see [Job chains](#job-chains) below)
+by passing the argument `--intermediate` to `jobSubmitter`, which corresponds to the argument `-I` for `jobExecCondor.sh`.
 
 The form of these scripts is tightly coupled with the operations of `jobSubmitter`.
 Therefore, by default the scripts are not specified as command-line arguments in Python,
 but instead as a member variable in the constructor of `jobSubmitter` (and must be changed explicitly in any
-extension of the class by users). The script names are passed to [jobExecCondor.sh](./scripts/jobExecCondor.sh)
-using the `-S` flag.
+extension of the class by users). The script names are passed to `jobExecCondor.sh` using the `-S` flag.
 
 Jobs can be run in a Singularity container using the [cmssw-env](https://github.com/cms-sw/cmssw-osenv) script.
 The arguments for that script are passed to `jobSubmitter` using the `--env` flag
@@ -209,7 +209,6 @@ The arguments for the default [step1.sh](./scripts/step1.sh) are:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
 * `-L [arg]`: `SCRAM_ARCH` value (if using cmsrel method or workaround)
 * `-X [arg]`: CMSSW location (if using xrdcp method)
-* `-I`: indicate that this job is an intermediate job in a chain (see [Job chains](#job-chains) below); this disables `stageOut` if used in Step2
 
 ##### CMSSW tarball creation
 
@@ -269,6 +268,7 @@ Default extra options:
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
 * `--env [args]`: args to run job in Singularity environment using cmssw-env (default = None)
+* `--intermediate`: specify that this is an intermediate job in a chain to disable staging out
 
 "Reserved", but not actually used by default:
 * `-o, --output [dir]`: path to output directory
@@ -281,12 +281,12 @@ Default extra options:
 "Mode of operation" options:
 * `-S [scripts]`: comma-separated list of subroutine scripts to run
 * `-E [args]`: args to run job in Singularity environment using cmssw-env
+* `-I`: indicate that this job is an intermediate job in a chain (see [Job chains](#job-chains) below); this disables `stageOut` if used in Step2
 
 Default step1 options:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
 * `-L [arg]`: `SCRAM_ARCH` value (if using cmsrel method or workaround)
 * `-X [arg]`: CMSSW location (if using xrdcp method)
-* `-I`: indicate that this job is an intermediate job in a chain (see [Job chains](#job-chains) below); this disables `stageOut` if used in Step2
 
 Default extra options:  
 none

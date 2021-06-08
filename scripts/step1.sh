@@ -10,18 +10,15 @@ export CMSSWVER=""
 export CMSSWLOC=""
 export CMSSWXRD=""
 export OPTIND=1
-export INTERCHAIN=0
 while [[ $OPTIND -le $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":C:L:X:I" opt
+	getopts ":C:L:X:" opt
 	case "$opt" in
 		C) export CMSSWVER=$OPTARG
 		;;
 		L) export CMSSWLOC=$OPTARG
 		;;
 		X) export CMSSWXRD=$OPTARG
-		;;
-		I) export INTERCHAIN=1
 		;;
 		# keep going if getopts had an error
 		\? | :) OPTIND=$((OPTIND+1))
