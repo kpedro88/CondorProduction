@@ -184,6 +184,14 @@ but instead as a member variable in the constructor of `jobSubmitter` (and must 
 extension of the class by users). The script names are passed to [jobExecCondor.sh](./scripts/jobExecCondor.sh)
 using the `-S` flag.
 
+Jobs can be run in a Singularity container using the [cmssw-env](https://github.com/cms-sw/cmssw-osenv) script.
+The arguments for that script are passed to `jobSubmitter` using the `--env` flag
+and to `jobExecCondor.sh` using the `-E` flag.
+There are existing CMSSW containers for cc6, cc7, cc8; to use one of these, pass an argument like `--env="--cmsos cc6"`.
+(If you want to specify your own image, set the environment variable `UNPACKED_IMAGE` and pass an argument like `--env=""`.)
+Please note, this functionality deliberately does not use the built-in Condor Singularity support,
+in order to handle [job chains](#job-chains) in which each job may use a different container (or no container).
+
 #### Step1
 
 The default step1 should be sufficient for most users. It allows a CMSSW environment to be initialized in one of 3 ways:
@@ -222,6 +230,7 @@ Some default Python arguments are provided in case the user is using the default
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
+* `--env [args]`: run in Singularity environment using cmssw-env (default = None)
 
 A few other Python arguments are not explicitly included in the default setup, but may often be added by users:
 * `-o, --output [dir]`: path to output directory
@@ -259,6 +268,7 @@ Default extra options:
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
+* `--env [args]`: args to run job in Singularity environment using cmssw-env (default = None)
 
 "Reserved", but not actually used by default:
 * `-o, --output [dir]`: path to output directory
@@ -269,7 +279,8 @@ Default extra options:
 <summary>Shell</summary>
 
 "Mode of operation" options:
-* `-S`: comma-separated list of subroutine scripts to run
+* `-S [scripts]`: comma-separated list of subroutine scripts to run
+* `-E [args]`: args to run job in Singularity environment using cmssw-env
 
 Default step1 options:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version

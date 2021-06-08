@@ -111,12 +111,19 @@ getFromClassAd() {
 }
 
 # check default arguments
+ORIGARGS="$@"
+TOPDIR=$PWD
 export SCRIPTS=""
+export USECONT=0
+export ARGCONT=""
 while [[ $OPTIND -le $# ]]; do
 	# getopts in silent mode, don't exit on errors
-	getopts ":S:" opt
+	getopts ":S:E:" opt
 	case "$opt" in
 		S) export SCRIPTS=$OPTARG
+		;;
+		E) export USECONT=1
+		   export ARGCONT="$OPTARG"
 		;;
 		# keep going if getopts had an error
 		\? | :) OPTIND=$((OPTIND+1))
@@ -124,10 +131,19 @@ while [[ $OPTIND -le $# ]]; do
 	esac
 done
 
+# check if need to launch singularity
+echo "Singularity container: $SINGULARITY_CONTAINER"
+if [ $USECONT -eq 1 ] && [ -z "$INCONT" ]; then
+	export INCONT=1
+	# environment setup
+	source /cvmfs/cms.cern.ch/cmsset_default.sh
+	cmssw-env $ARGCONT -B $TOPDIR --pwd $TOPDIR -- $0 $ORIGARGS
+	exit $?
+fi
+
 IFS="," read -a SCRIPTARRAY <<< "$SCRIPTS"
 
 # execute scripts in order
-TOPDIR=$PWD
 for SCRIPT in ${SCRIPTARRAY[@]}; do
 	cd $TOPDIR
 	if [ -e ${SCRIPT} ]; then

@@ -214,6 +214,7 @@ class jobSubmitter(object):
         parser.add_option("--memory", dest="memory", default=2000, help="specify amount of memory per job [MB] (default = %default)")
         parser.add_option("--cpus", dest="cpus", default=1, help="specify number of CPU threads per job (default = %default)")
         parser.add_option("--sites", dest="sites", default=parser_dict["submit"]["sites"], help="comma-separated list of sites for global pool running (default = %default)")
+        parser.add_option("--env", dest="env", default=None, help="args to run job in Singularity environment using cmssw-env (default = %default)")
 
     def checkExtraOptions(self,options,parser):
         pass
@@ -286,6 +287,7 @@ class jobSubmitter(object):
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
             ("MYCPUS",self.cpus),
+            ("ENVARGS",'-E "{}"'.format(self.env) if self.env is not None else ""),
         ])
         # special option for CMS Connect
         if (os.uname()[1]=="login.uscms.org" or os.uname()[1]=="login-el7.uscms.org") and len(self.sites)>0:
