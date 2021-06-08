@@ -175,7 +175,8 @@ The executable script also provides some bash helper functions.
 requested CPUs when running a multicore job.
 * `stageOut`: copies a local file to a storage element using `xrdcp`. It can retry a specified number of times,
 with a specified wait time that increases with each retry. This helps avoid job failure from a temporarily interrupted connection
-or unavailable storage element.
+or unavailable storage element. It can also clean up by removing local files (upon successful or unsuccessful copying).
+It can be disabled for intermediate jobs in chains (see [Job chains](#job-chains) below).
 
 The form of these scripts is tightly coupled with the operations of `jobSubmitter`.
 Therefore, by default the scripts are not specified as command-line arguments in Python,
@@ -200,6 +201,7 @@ The arguments for the default [step1.sh](./scripts/step1.sh) are:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
 * `-L [arg]`: `SCRAM_ARCH` value (if using cmsrel method or workaround)
 * `-X [arg]`: CMSSW location (if using xrdcp method)
+* `-I`: indicate that this job is an intermediate job in a chain (see [Job chains](#job-chains) below); this disables `stageOut` if used in Step2
 
 ##### CMSSW tarball creation
 
@@ -273,6 +275,7 @@ Default step1 options:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
 * `-L [arg]`: `SCRAM_ARCH` value (if using cmsrel method or workaround)
 * `-X [arg]`: CMSSW location (if using xrdcp method)
+* `-I`: indicate that this job is an intermediate job in a chain (see [Job chains](#job-chains) below); this disables `stageOut` if used in Step2
 
 Default extra options:  
 none

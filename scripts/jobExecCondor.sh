@@ -2,6 +2,10 @@
 
 # helper function to stage out via xrdcp
 stageOut() {
+	if [ $INTERCHAIN -eq 1 ]; then
+		return 0
+	fi
+
 	WAIT=5
 	NUMREP=5
 	INPUT=""
@@ -10,6 +14,8 @@ stageOut() {
 	QUIET=0
 	GFAL=0
 	CMDSTR="xrdcp"
+	REMOVE=0
+	CLEANUP=""
 
 	stageOut_usage() {
 		case `uname` in
@@ -27,27 +33,33 @@ stageOut() {
 		$ECHO "-x args       \tany arguments to pass to xrdcp/gfal-copy (should be quoted)"
 		$ECHO "-g            \tUse gfal-copy rather than xrdcp"
 		$ECHO "-q            \tquiet (don't print any messages)"
+		$ECHO "-r            \tremove local file if successfully copied"
+		$ECHO "-c files      \tcleanup: delete specified file(s) if copy fails"
 	}
 
 	# set vars used by getopts to local
 	local OPTIND OPTARG
-	while getopts "i:o:w:n:x:gq" opt; do
+	while getopts "i:o:w:n:x:gqrc:" opt; do
 		case "$opt" in
-		i) INPUT="$OPTARG"
-		;;
-		o) OUTPUT="$OPTARG"
-		;;
-		w) WAIT="$OPTARG"
-		;;
-		n) NUMREP="$OPTARG"
-		;;
-		x) XRDARGS="$OPTARG"
-		;;
-		g) GFAL=1
-		   CMDSTR="gfal-copy"
-		;;
-		q) QUIET=1
-		;;
+			i) INPUT="$OPTARG"
+			;;
+			o) OUTPUT="$OPTARG"
+			;;
+			w) WAIT="$OPTARG"
+			;;
+			n) NUMREP="$OPTARG"
+			;;
+			x) XRDARGS="$OPTARG"
+			;;
+			g) GFAL=1
+			   CMDSTR="gfal-copy"
+			;;
+			q) QUIET=1
+			;;
+			r) REMOVE=1
+			;;
+			c) CLEANUP="$OPTARG"
+			;;
 		esac
 	done
 
@@ -66,6 +78,7 @@ stageOut() {
 		fi
 		XRDEXIT=$?
 		if [ $XRDEXIT -eq 0 ]; then
+			if [ $REMOVE -eq 1 ]; then rm $INPUT; fi
 			return 0
 		fi
 		# in case of bad exit, wait and try again
@@ -76,6 +89,7 @@ stageOut() {
 
 	# if we get here, it really didn't work
 	if [ $QUIET -eq 0 ]; then echo "$CMDSTR failed $NUMREP times. It might be an actual problem."; fi
+	if [ -n "$CLEANUP" ]; then rm $CLEANUP; fi
 	return 60000
 }
 
@@ -98,7 +112,7 @@ getFromClassAd() {
 
 # check default arguments
 export SCRIPTS=""
-while [[ $OPTIND -lt $# ]]; do
+while [[ $OPTIND -le $# ]]; do
 	# getopts in silent mode, don't exit on errors
 	getopts ":S:" opt
 	case "$opt" in
