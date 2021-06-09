@@ -135,7 +135,6 @@ while [[ $OPTIND -le $# ]]; do
 done
 
 # check if need to launch singularity
-echo "Singularity container: $SINGULARITY_CONTAINER"
 if [ $USECONT -eq 1 ] && [ -z "$INCONT" ]; then
 	export INCONT=1
 	# environment setup

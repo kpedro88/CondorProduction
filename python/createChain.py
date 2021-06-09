@@ -1,11 +1,11 @@
-import os, shutil, tarfile
+import os, shutil, tarfile, glob
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from collections import OrderedDict, defaultdict
 
-class OrderedDefaultDict(OrderedDict, defaultdict):
+class DefaultOrderedDict(OrderedDict, defaultdict):
     def __init__(self, default_factory=None, *args, **kwargs):
         #in python3 you can omit the args to super
-        super(OrderedDefaultDict, self).__init__(*args, **kwargs)
+        super(DefaultOrderedDict, self).__init__(*args, **kwargs)
         self.default_factory = default_factory
 
 def createChain(jdls,name,log):
@@ -19,19 +19,22 @@ def createChain(jdls,name,log):
         jdir = os.path.dirname(jdl)
         subdir = "job{}".format(job_counter)
         subdir_path = os.path.join(name,subdir)
-        if os.path.isdir(subdir): shutil.rmtree(subdir_path)
-        os.path.mkdir(subdir_path)
+        if os.path.isdir(subdir_path): shutil.rmtree(subdir_path)
+        os.mkdir(subdir_path)
         lines = []
         with open(jdl,'r') as jfile:
             lines = []
             concat_next = False
             for line in jfile:
+                line = line.rstrip()
                 if concat_next: lines[-1] += line
                 else: lines.append(line)
                 # detect and handle multi-line
                 if line[-1]=="\\":
                     concat_next = True
                     lines[-1] = lines[-1][:-1]
+                else:
+                    concat_next = False
         for line in lines:
             linesplit = line.split(" = ", 1)
             try:
@@ -47,7 +50,14 @@ def createChain(jdls,name,log):
             # copy input files to subdir
             elif key==key_transfer:
                 for file in val.split(','):
-                    shutil.copy2(os.path.join(jdir,file),subdir_path)
+                    file = file.strip()
+                    # todo: find better way to handle "one input file per job" case
+                    if "$(Process)" in file:
+                        files = glob.glob(file.replace("$(Process)","*"))
+                    else:
+                        files = [file]
+                    for file in files:
+                        shutil.copy2(os.path.join(jdir,file),subdir_path)
             # keep each job's arguments separate
             elif key=="arguments":
                 argfile = os.path.join(subdir_path,"arguments.txt")
@@ -76,10 +86,11 @@ def createChain(jdls,name,log):
     # finish up arguments
     final[key_transfer] = "jobExecCondorChain.sh,"+tarname
     final["arguments"] = "-J {} -N {}".format(name,job_counter)
+    final["executable"] = "jobExecCondorChain.sh"
     # write final jdl file
     finalname = "jobExecCondor_{}.jdl".format(name)
     with open(finalname,'w') as ffile:
-        ffile.write('\n'.join([key+" = "+val for key,val in final.iteritems()]))
+        ffile.write('\n'.join([key+" = "+val for key,val in final.iteritems()])+'\n')
         ffile.write(queue+'\n')
 
 if __name__=="__main__":
@@ -89,4 +100,4 @@ if __name__=="__main__":
     parser.add_argument("-l", "--log", dest="log", type=str, required=True, help="log name prefix from first job (will be replaced w/ chain job name)")
     args = parser.parse_args()
     createChain(args.jdls,args.name,args.log)
-    
+
