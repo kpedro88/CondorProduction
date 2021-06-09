@@ -2,11 +2,14 @@
 
 JOBNAME=""
 NJOBS=0
-while getopts "J:N:" opt; do
+PROCESS=""
+while getopts "J:N:P:" opt; do
 	case "$opt" in
 		J) JOBNAME=$OPTARG
 		;;
 		N) NJOBS=$OPTARG
+		;;
+		P) PROCESS=$OPTARG
 		;;
 	esac
 done
@@ -19,7 +22,7 @@ cd ${JOBNAME}
 for ((i=0; i<${NJOBS}; i++)); do
 	cd job${i}
 	JNAME=$(cat jobname.txt)
-	ARGS=$(cat arguments.txt)
+	ARGS=$(cat arguments.txt | sed 's/$(Process)/'$PROCESS'/')
 	echo "Executing job${i} ($JNAME)"
 	./jobExecCondor.sh $ARGS
 	JOBEXIT=$?

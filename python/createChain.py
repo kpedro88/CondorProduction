@@ -85,7 +85,7 @@ def createChain(jdls,name,log):
         tar.add(name,name)
     # finish up arguments
     final[key_transfer] = "jobExecCondorChain.sh,"+tarname
-    final["arguments"] = "-J {} -N {}".format(name,job_counter)
+    final["arguments"] = "-J {} -N {} -P $(Process)".format(name,job_counter)
     final["executable"] = "jobExecCondorChain.sh"
     # write final jdl file
     finalname = "jobExecCondor_{}.jdl".format(name)

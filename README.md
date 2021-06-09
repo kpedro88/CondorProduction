@@ -355,6 +355,7 @@ The python script's options are:
 The shell script's options are:
 * `-J [jobname]`: name for chain job
 * `-N [number]`: number of jobs in chain
+* `-P [process]`: process number (used to substitute for `$(Process)` if found in individual job arguments)
 
 Several caveats currently apply:
 * The argument `-q, --no-queue-arg` should be used when preparing individual jobs.
