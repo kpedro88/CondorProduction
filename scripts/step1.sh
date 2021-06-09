@@ -12,6 +12,7 @@ export CMSSWXRD=""
 export OPTIND=1
 while [[ $OPTIND -le $# ]]; do
 	# getopts in silent mode, don't exit on errors
+	OPTOLD=$OPTIND
 	getopts ":C:L:X:" opt
 	case "$opt" in
 		C) export CMSSWVER=$OPTARG
@@ -20,8 +21,8 @@ while [[ $OPTIND -le $# ]]; do
 		;;
 		X) export CMSSWXRD=$OPTARG
 		;;
-		# keep going if getopts had an error
-		\? | :) OPTIND=$((OPTIND+1))
+		# keep going if getopts had an error, but make sure not to skip anything
+		\? | :) OPTIND=$((OPTOLD+1))
 		;;
 	esac
 done
@@ -31,6 +32,9 @@ echo "parameter set:"
 echo "CMSSWVER: $CMSSWVER"
 if [ -n "$CMSSWLOC" ]; then
 	echo "CMSSWLOC: $CMSSWLOC"
+fi
+if [ -n "$CMSSWXRD" ]; then
+	echo "CMSSWXRD: $CMSSWXRD"
 fi
 echo ""
 
