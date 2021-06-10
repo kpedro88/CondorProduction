@@ -119,6 +119,7 @@ export ARGCONT=""
 export INTERCHAIN=0
 while [[ $OPTIND -le $# ]]; do
 	# getopts in silent mode, don't exit on errors
+	OPTOLD=$OPTIND
 	getopts ":S:E:I" opt
 	case "$opt" in
 		S) export SCRIPTS=$OPTARG
@@ -128,8 +129,8 @@ while [[ $OPTIND -le $# ]]; do
 		;;
 		I) export INTERCHAIN=1
 		;;
-		# keep going if getopts had an error
-		\? | :) OPTIND=$((OPTIND+1))
+		# keep going if getopts had an error, but make sure not to skip anything
+		\? | :) OPTIND=$((OPTOLD+1))
 		;;
 	esac
 done
