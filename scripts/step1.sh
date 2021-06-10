@@ -47,13 +47,18 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh
 if [[ "$CMSSWXRD" == root:* ]]; then
 	echo "Getting CMSSW via xrdcp"
 	xrdcp -f ${CMSSWXRD}/${CMSSWVER}.tar.gz .
-fi
-if [ -n "$CMSSWLOC" ]; then
+	XRDEXIT=$?
+	if [[ $XRDEXIT -ne 0 ]]; then
+		echo "exit code $XRDEXIT, failure in xrdcp"
+		exit $XRDEXIT
+	fi
+elif [ -n "$CMSSWLOC" ]; then
 	echo "Getting CMSSW via cmsrel"
 	export SCRAM_ARCH=${CMSSWLOC}
 fi
 
 # use a tarball if we have it, otherwise make a new release area
+set -e
 if [ -e ${CMSSWVER}.tar.gz ]; then
 	# workaround
 	if [ -n "$CMSSWLOC" ]; then
@@ -74,3 +79,4 @@ else
 fi
 # cmsenv
 eval `scramv1 runtime -sh`
+set +e
