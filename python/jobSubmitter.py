@@ -288,7 +288,7 @@ class jobSubmitter(object):
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
             ("MYCPUS",self.cpus),
-            ("ENVARGS",('-E "{}"'.format(self.env) if self.env is not None else "")+(" -I" if self.intermediate else "")),
+            ("ENVARGS",("-E {}".format(self.env) if self.env is not None else "")+(" -I" if self.intermediate else "")),
         ])
         # special option for CMS Connect
         if (os.uname()[1]=="login.uscms.org" or os.uname()[1]=="login-el7.uscms.org") and len(self.sites)>0:
