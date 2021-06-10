@@ -111,7 +111,6 @@ getFromClassAd() {
 }
 
 # check default arguments
-ORIGARGS="$@"
 TOPDIR=$PWD
 export SCRIPTS=""
 export USECONT=0
@@ -140,7 +139,7 @@ if [ $USECONT -eq 1 ] && [ -z "$INCONT" ]; then
 	export INCONT=1
 	# environment setup
 	source /cvmfs/cms.cern.ch/cmsset_default.sh
-	cmssw-env $ARGCONT -B $TOPDIR --pwd $TOPDIR -- $0 $ORIGARGS
+	UNPACKED_IMAGE=$ARGCONT cmssw-env -B $TOPDIR --pwd $TOPDIR -- $0 "$@"
 	exit $?
 fi
 
@@ -153,7 +152,7 @@ for SCRIPT in ${SCRIPTARRAY[@]}; do
 		echo "Executing ${SCRIPT}"
 		echo ""
 		# pass command line args in case used
-		source $(echo ${SCRIPT})
+		source ${SCRIPT}
 		echo ""
 	else
 		echo "Could not find ${SCRIPT}"
