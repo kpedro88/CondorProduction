@@ -185,7 +185,7 @@ but instead as a member variable in the constructor of `jobSubmitter` (and must 
 extension of the class by users). The script names are passed to `jobExecCondor.sh` using the `-S` flag.
 
 Jobs can be run in a Singularity container using the [cmssw-env](https://github.com/cms-sw/cmssw-osenv) script.
-The name of the container is passed to `jobSubmitter` using the `--env` flag
+The name of the container (e.g. `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/slc6:latest`) is passed to `jobSubmitter` using the `--env` flag
 and to `jobExecCondor.sh` using the `-E` flag.
 (Passing other arguments to the script is currently not supported, due to conflicts arising from limitations in Bash `getopts`.)
 There are existing CMSSW containers available at `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/`.
