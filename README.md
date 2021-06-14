@@ -188,7 +188,8 @@ Jobs can be run in a Singularity container using the [cmssw-env](https://github.
 The name of the container (e.g. `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/slc6:latest`) is passed to `jobSubmitter` using the `--env` flag
 and to `jobExecCondor.sh` using the `-E` flag.
 (Passing other arguments to the script is currently not supported, due to conflicts arising from limitations in Bash `getopts`.)
-There are existing CMSSW containers available at `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/`.
+There are existing CMSSW containers available at `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/`;
+other Singularity containers hosted on CVMFS can also be used.
 Please note, this functionality deliberately does not use the built-in Condor Singularity support,
 in order to handle [job chains](#job-chains) in which each job may use a different container (or no container).
 
