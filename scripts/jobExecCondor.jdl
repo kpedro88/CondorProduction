@@ -13,7 +13,7 @@ Error = JOBNAME.stderr
 Log = JOBNAME.condor
 notification = Never
 x509userproxy = $ENV(X509_USER_PROXY)
-Arguments = -S SCRIPTARGS STEP1ARGS EXTRAARGS
+Arguments = -S SCRIPTARGS ENVARGS STEP1ARGS EXTRAARGS
 want_graceful_removal = true
 on_exit_remove = (ExitBySignal == False) && (ExitCode == 0)
 on_exit_hold = ( (ExitBySignal == True) || (ExitCode != 0) )

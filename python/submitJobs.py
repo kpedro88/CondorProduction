@@ -1,4 +1,4 @@
-from jobSubmitter import jobSubmitter
+from Condor.Production.jobSubmitter import jobSubmitter
 
 def submitJobs():  
     mySubmitter = jobSubmitter()

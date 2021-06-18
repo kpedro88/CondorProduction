@@ -23,10 +23,11 @@ Table of Contents
          * [CMSSW tarball creation](#cmssw-tarball-creation)
       * [Step2 and beyond](#step2-and-beyond)
    * [Summary of options](#summary-of-options)
-   * [Examples](#examples)
 * [Job management](#job-management)
+* [Job chains](#job-chains)
 * [Configuration](#configuration)
 * [Dependencies](#dependencies)
+* [Examples](#examples)
 
 (Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc))
 
@@ -174,13 +175,23 @@ The executable script also provides some bash helper functions.
 requested CPUs when running a multicore job.
 * `stageOut`: copies a local file to a storage element using `xrdcp`. It can retry a specified number of times,
 with a specified wait time that increases with each retry. This helps avoid job failure from a temporarily interrupted connection
-or unavailable storage element.
+or unavailable storage element. It can also clean up by removing local files (upon successful or unsuccessful copying).
+Staging out can be disabled for intermediate jobs in chains (see [Job chains](#job-chains) below)
+by passing the argument `--intermediate` to `jobSubmitter`, which corresponds to the argument `-I` for `jobExecCondor.sh`.
 
 The form of these scripts is tightly coupled with the operations of `jobSubmitter`.
 Therefore, by default the scripts are not specified as command-line arguments in Python,
 but instead as a member variable in the constructor of `jobSubmitter` (and must be changed explicitly in any
-extension of the class by users). The script names are passed to [jobExecCondor.sh](./scripts/jobExecCondor.sh)
-using the `-S` flag.
+extension of the class by users). The script names are passed to `jobExecCondor.sh` using the `-S` flag.
+
+Jobs can be run in a Singularity container using the [cmssw-env](https://github.com/cms-sw/cmssw-osenv) script.
+The name of the container (e.g. `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/slc6:latest`) is passed to `jobSubmitter` using the `--env` flag
+and to `jobExecCondor.sh` using the `-E` flag.
+(Passing other arguments to the script is currently not supported, due to conflicts arising from limitations in Bash `getopts`.)
+There are existing CMSSW containers available at `/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/`;
+other Singularity containers hosted on CVMFS can also be used.
+Please note, this functionality deliberately does not use the built-in Condor Singularity support,
+in order to handle [job chains](#job-chains) in which each job may use a different container (or no container).
 
 #### Step1
 
@@ -219,6 +230,7 @@ Some default Python arguments are provided in case the user is using the default
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
+* `--env [args]`: run in Singularity environment using cmssw-env (default = None)
 
 A few other Python arguments are not explicitly included in the default setup, but may often be added by users:
 * `-o, --output [dir]`: path to output directory
@@ -256,6 +268,8 @@ Default extra options:
 * `--memory [amount]`: amount of memory to request for job [MB] (default = 2000)
 * `--cpus [number]`: number of CPUs (threads) for job (default = 1)
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
+* `--env [args]`: args to run job in Singularity environment using cmssw-env (default = None)
+* `--intermediate`: specify that this is an intermediate job in a chain to disable staging out
 
 "Reserved", but not actually used by default:
 * `-o, --output [dir]`: path to output directory
@@ -266,7 +280,9 @@ Default extra options:
 <summary>Shell</summary>
 
 "Mode of operation" options:
-* `-S`: comma-separated list of subroutine scripts to run
+* `-S [scripts]`: comma-separated list of subroutine scripts to run
+* `-E [args]`: args to run job in Singularity environment using cmssw-env
+* `-I`: indicate that this job is an intermediate job in a chain (see [Job chains](#job-chains) below); this disables `stageOut` if used in Step2
 
 Default step1 options:
 * `-C [CMSSW_X_Y_Z]`: CMSSW release version
@@ -279,11 +295,6 @@ none
 "Reserved", but not actually used by default:
 * `-x [redir]`: xrootd redirector address or site name (for reading input files)
 </details>
-
-### Examples
-
-* [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
-* [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
 
 ## Job management
 
@@ -322,6 +333,35 @@ It uses a number of command line options to specify how to display job informati
 The options `-h`, `-i`, `-r`, `-f` are exclusive. The options `-s` and `-k` are also exclusive. The option `-a` is currently only supported
 at the LPC (where each interactive node has its own scheduler). The script can ssh to each node and run itself to modify the jobs
 on that node (because each scheduler can only be accessed for write operations from its respective node).
+
+## Job chains
+
+Multiple jobs can be chained together in order to run in series.
+(This may be useful, for example, to avoid storing large intermediate output files, in order to reduce disk usage requirements.)
+A script [createChain.py](./python/createChain.py) is provided to create these chains from individual jobs.
+It produces an aggregated input tarball and corresponding JDL file that can be submitted using `condor_submit`
+and executes [jobExecCondorChain.sh](./scripts/jobExecCondorChain.sh).
+
+The aggregrate input tarball contains a directory for each job, named (in order) `job0`, `job1`, etc.
+Each job is executed in its own directory, with its own environment.
+This regular structure can be used during the preparation of the individual jobs;
+for example, `job1` can refer to the expected output file from `job0` using the relative path `../job0/[file]`.
+
+The python script's options are:
+* `-h, --help`: show help message and exit
+* `-n NAME, --name NAME`: name for chain job (required)
+* `-j JDLS [JDLS ...], --jdls JDLS [JDLS ...]`: full paths to JDL files (at least one required)
+* `-l LOG, --log LOG`: log name prefix from first job (will be replaced w/ chain job name)
+
+The shell script's options are:
+* `-J [jobname]`: name for chain job
+* `-N [number]`: number of jobs in chain
+* `-P [process]`: process number (used to substitute for `$(Process)` if found in individual job arguments)
+
+Several caveats currently apply:
+* The argument `-q, --no-queue-arg` should be used when preparing individual jobs.
+* It is recommended to use the `xrdcp` method for transferring CMSSW environment in Step1 when preparing individual jobs.
+* The aggregate input tarball must be transferred via Condor, not via xrdcp.
 
 ## Configuration
 
@@ -368,3 +408,14 @@ but if they are not available, it cannot run.
 
 For more information about global pool sites, see 
 [Selecting Sites - CMS Connect Handbook](https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
+
+## Examples
+
+A very basic example can be found in the [test](./test) directory.
+
+Other repositories that use this package include:
+* [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
+* [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
+* [SVJtagger](https://github.com/kpedro88/SVJtagger/tree/master/uBDT) - BDT training
+* [SimDenoising](https://github.com/kpedro88/SimDenoising#batch-submission) - simulated data generation
+* [SonicCMS](https://github.com/fastmachinelearning/SonicCMS/tree/v5.2.0/Brainwave) - ML inference
