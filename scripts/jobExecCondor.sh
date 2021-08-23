@@ -3,6 +3,13 @@
 # helper function to stage out via xrdcp
 stageOut() {
 	if [ $INTERCHAIN -eq 1 ]; then
+		# store current path, command, args to rerun later if needed
+		if [ -n "$CHECKPOINT_CURR" ]; then
+			PATH_TMP=$(realpath --relative-to=${JOBDIR_BASE}/${JOB_CURR} $PWD)
+			echo "mkdir -p $PATH_TMP && cd $PATH_TMP" >> ${CHECKPOINT_CURR}
+			echo "stageOut $@" >> ${CHECKPOINT_CURR}
+		fi
+
 		return 0
 	fi
 
@@ -16,6 +23,7 @@ stageOut() {
 	CMDSTR="xrdcp"
 	REMOVE=0
 	CLEANUP=""
+	REVERSE=0
 
 	stageOut_usage() {
 		case `uname` in
@@ -35,11 +43,12 @@ stageOut() {
 		$ECHO "-q            \tquiet (don't print any messages)"
 		$ECHO "-r            \tremove local file if successfully copied"
 		$ECHO "-c files      \tcleanup: delete specified file(s) if copy fails"
+		$ECHO "-R            \treverse (stagein): swap input and output"
 	}
 
 	# set vars used by getopts to local
 	local OPTIND OPTARG
-	while getopts "i:o:w:n:x:gqrc:" opt; do
+	while getopts "i:o:w:n:x:gqrc:R" opt; do
 		case "$opt" in
 			i) INPUT="$OPTARG"
 			;;
@@ -60,12 +69,22 @@ stageOut() {
 			;;
 			c) CLEANUP="$OPTARG"
 			;;
+			r) REVERSE=1
+			;;
 		esac
 	done
 
 	if [[ -z "$INPUT" ]] || [[ -z "$OUTPUT" ]]; then
 		stageOut_usage
 		return 1
+	fi
+
+	if [ "$REVERSE" -eq 1 ]; then
+		TMPPUT="$INPUT"
+		INPUT="$OUTPUT"
+		OUTPUT="$INPUT"
+		# ensure expected output directory exists
+		mkdir -p $(dirname $OUTPUT)
 	fi
 
 	# try to copy n times, increasing wait each time

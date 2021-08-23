@@ -8,7 +8,7 @@ class DefaultOrderedDict(OrderedDict, defaultdict):
         super(DefaultOrderedDict, self).__init__(*args, **kwargs)
         self.default_factory = default_factory
 
-def createChain(jdls,name,log):
+def createChain(jdls,name,log,checkpoint):
     final = DefaultOrderedDict(str)
     queue = ""
     if not os.path.isdir(name): os.mkdir(name)
@@ -87,6 +87,17 @@ def createChain(jdls,name,log):
     final[key_transfer] = "jobExecCondorChain.sh,"+tarname
     final["arguments"] = "-J {} -N {} -P $(Process)".format(name,job_counter)
     final["executable"] = "jobExecCondorChain.sh"
+    # checkpoint info is kept using condor file transfer
+    if checkpoint:
+        checkpoint_dir = "checkpoints/{}".format(name)
+        checkpoint_fname1 = "checkpoint_{}_$(Process).txt".format(name)
+        checkpoint_fname2 = "{}/{}".format(checkpoint_dir,checkpoint_fname1)
+        final["should_transfer_files"] = "YES"
+        final["transfer_output_files"] = checkpoint_fname1
+        final["transfer_output_remaps"] = "{} = {}".format(checkpoint_fname1,checkpoint_fname2)
+        # transfer whole dir to avoid having to make empty checkpoint files
+        final[key_transfer] = ','.join(final[key_transfer],checkpoint_dir)
+        if not os.path.isdir(checkpoint_dir): os.makedirs(checkpoint_dir)
     # write final jdl file
     finalname = "jobExecCondor_{}.jdl".format(name)
     with open(finalname,'w') as ffile:
@@ -98,6 +109,7 @@ if __name__=="__main__":
     parser.add_argument("-n", "--name", dest="name", type=str, required=True, help="name for chain job")
     parser.add_argument("-j", "--jdls", dest="jdls", type=str, default=[], nargs='+', help="full paths to JDL files")
     parser.add_argument("-l", "--log", dest="log", type=str, required=True, help="log name prefix from first job (will be replaced w/ chain job name)")
+    parser.add_argument("-c", "--checkpoint", dest="checkpoint", default=False, action="store_true", help="enable checkpointing (if a job fails, save output files from previous job in chain)")
     args = parser.parse_args()
-    createChain(args.jdls,args.name,args.log)
+    createChain(args.jdls,args.name,args.log,args.checkpoint)
 

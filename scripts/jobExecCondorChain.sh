@@ -3,7 +3,8 @@
 JOBNAME=""
 NJOBS=0
 PROCESS=""
-while getopts "J:N:P:" opt; do
+CHECKPOINT=""
+while getopts "J:N:P:C" opt; do
 	case "$opt" in
 		J) JOBNAME=$OPTARG
 		;;
@@ -11,24 +12,85 @@ while getopts "J:N:P:" opt; do
 		;;
 		P) PROCESS=$OPTARG
 		;;
+		C) CHECKPOINT=1
+		;;
 	esac
 done
+FIRST_STEP=0
 
 # open aggregate tarball
 tar -xzf ${JOBNAME}.tar.gz
 
+# for checkpoints
+TOPDIR=$PWD
+CHECKPOINT_PRE=$PWD/checkpoints/${JOBNAME}
+mkdir -p ${CHECKPOINT_PRE}
+CHECKPOINT_FILE=checkpoint_${JOBNAME}_${PROCESS}
+CHECKPOINT_OUT=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.txt
+CHECKPOINT_IN=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.sh
+export CHECKPOINT_PREV=""
+export CHECKPOINT_CURR=""
+
+# check previous checkpoint
+if [ -f "$CHECKPOINT_OUT" ]; then
+	cp ${CHECKPOINT_OUT} ${CHECKPOINT_IN}
+	CHECKPOINT_STEP=$(head -n 1 ${CHECKPOINT_IN} | cut -d' ' -f3)
+	if [ -n "$CHECKPOINT_STEP" ] && [ -n "$CHECKPOINT" ]; then
+		FIRST_STEP=${CHECKPOINT_STEP}
+		# set up stagein commands (reverse of stageout)
+		sed -i 's/stageOut/stageOut -R/g' ${CHECKPOINT_IN}
+	fi
+fi
+
 # execute each job in series
+export JOBDIR_BASE=${TOPDIR}/${JOBNAME}
+export JOB_PREV=""
+export JOB_CURR=""
 cd ${JOBNAME}
-for ((i=0; i<${NJOBS}; i++)); do
-	cd job${i}
+for ((i=${FIRST_STEP}; i<${NJOBS}; i++)); do
+	# backup previous checkpoint
+	export CHECKPOINT_PREV=${CHECKPOINT_CURR}
+	export JOB_PREV=${JOB_CURR}
+	export JOB_CURR=job${i}
+
+	cd ${JOB_CURR}
 	JNAME=$(cat jobname.txt)
 	ARGS=$(cat arguments.txt | sed 's/$(Process)/'$PROCESS'/')
-	echo "Executing job${i} ($JNAME)"
-	./jobExecCondor.sh $ARGS
-	JOBEXIT=$?
-	if [[ $JOBEXIT -ne 0 ]]; then
-		echo "job${i} ($JNAME) failed (exit code $JOBEXIT)"
-		exit $JOBEXIT
+
+	# recover input files from checkpointed step
+	if [[ "$i" == "$CHECKPOINT_STEP" ]]; then
+		# CHECKPOINT_CURR not set here, so next step will have blank CHECKPOINT_PREV
+		# -> existing CHECKPOINT_OUT will be kept if next step fails again
+		echo "Recovering output from ${JOB_CURR} ($JNAME)"
+		# need to get env from step1.sh?
+		source ${CHECKPOINT_IN}
+	else
+		# advance to next checkpoint
+		# only if actually running job (not if recovering)
+		export CHECKPOINT_CURR=${CHECKPOINT_PRE}/${JOB_CURR}.sh
+		echo "source ${JOBDIR_BASE}/${JOB_CURR}/jobExecCondor.sh" >> ${CHECKPOINT_CURR}
+
+		echo "Executing ${JOB_CURR} ($JNAME)"
+		./jobExecCondor.sh $ARGS
+		JOBEXIT=$?
+		if [[ $JOBEXIT -ne 0 ]]; then
+			echo "${JOB_CURR} ($JNAME) failed (exit code $JOBEXIT)"
+
+			# if first job failed, nothing to checkpoint
+			if [ -n "$CHECKPOINT" ] && [ -n "$CHECKPOINT_PREV" ]; then
+				# checkpoint: stageout files from previous step
+				# in subshell just to be safe
+				(
+				cd ${JOBDIR_BASE}/${JOB_PREV}
+				source ${CHECKPOINT_PREV}
+				)
+				# transfer back most recent checkpoint via condor
+				mv ${CHECKPOINT_PREV} ${CHECKPOINT_OUT}
+				# keep track of checkpointed job step number
+				sed -i '1s/^/# step '$((i-1))'\n/' ${CHECKPOINT_OUT}
+			fi
+			exit $JOBEXIT
+		fi
 	fi
 	cd ..
 done
