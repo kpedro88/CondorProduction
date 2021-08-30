@@ -40,3 +40,8 @@ __init__.py
 *.zip
 *.eps
 *.tar.gz
+
+# text files
+*.stdout
+*.stderr
+*.condor
