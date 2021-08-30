@@ -5,7 +5,7 @@ fnal = cmssrv268.fnal.gov,cmssrv605.fnal.gov
 cmscon = login.uscms.org
 [schedds]
 fnal = lpcschedd1.fnal.gov,lpcschedd2.fnal.gov,lpcschedd3.fnal.gov
-cmscon = login.uscms.org
+cmscon = login-el7.uscms.org
 [caches]
 $CMSSW_BASE/tmp = 1
 [manage]
