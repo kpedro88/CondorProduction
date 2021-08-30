@@ -352,11 +352,13 @@ The python script's options are:
 * `-n NAME, --name NAME`: name for chain job (required)
 * `-j JDLS [JDLS ...], --jdls JDLS [JDLS ...]`: full paths to JDL files (at least one required)
 * `-l LOG, --log LOG`: log name prefix from first job (will be replaced w/ chain job name)
+* `-c, --checkpoint`: enable checkpointing (if a job fails, save output files from previous job in chain)
 
 The shell script's options are:
 * `-J [jobname]`: name for chain job
 * `-N [number]`: number of jobs in chain
 * `-P [process]`: process number (used to substitute for `$(Process)` if found in individual job arguments)
+* `-C`: enable checkpointing (see above)
 
 Several caveats currently apply:
 * The argument `-q, --no-queue-arg` should be used when preparing individual jobs.
