@@ -3,6 +3,9 @@
 echo "Starting job on "`date` # to display the start date
 echo "Running on "`uname -a` # to display the machine where the job is running
 echo "System release "`cat /etc/redhat-release` # and the system release
+if [ -n "$SINGULARITY_CONTAINER" ]; then
+	echo "Singularity container $SINGULARITY_CONTAINER"
+fi
 echo ""
 
 export JOBNAME=""

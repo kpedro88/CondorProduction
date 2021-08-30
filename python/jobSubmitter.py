@@ -216,6 +216,7 @@ class jobSubmitter(object):
         parser.add_option("--sites", dest="sites", default=parser_dict["submit"]["sites"], help="comma-separated list of sites for global pool running (default = %default)")
         parser.add_option("--env", dest="env", default=None, help="args to run job in Singularity environment using cmssw-env (default = %default)")
         parser.add_option("--intermediate", dest="intermediate", default=False, action="store_true", help="specify that this is an intermediate job in a chain to disable staging out (default = %default)")
+        parser.add_option("--singularity", dest="singularity", default="", help="specify singularity image for job (default = %default)")
 
     def checkExtraOptions(self,options,parser):
         pass
@@ -283,15 +284,17 @@ class jobSubmitter(object):
             job.patterns["x509userproxy = $ENV(X509_USER_PROXY)\n"] = ""
 
     def generateExtra(self,job):
+        is_cms_connect = os.uname()[1]=="login.uscms.org" or os.uname()[1]=="login-el7.uscms.org"
         job.patterns.update([
             ("OSVERSION","rhel7" if "el7" in os.uname()[2] else "rhel6"),
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
             ("MYCPUS",self.cpus),
             ("ENVARGS",("-E {}".format(self.env) if self.env is not None else "")+(" -I" if self.intermediate else "")),
+            ("SINGULARITYARGS",('+SingularityImage = "{}"'.format(self.singularity) if len(self.singularity)>0 else "")+("\nRequirements = HAS_SINGULARITY == True" if is_cms_connect else "")),
         ])
         # special option for CMS Connect
-        if (os.uname()[1]=="login.uscms.org" or os.uname()[1]=="login-el7.uscms.org") and len(self.sites)>0:
+        if is_cms_connect and len(self.sites)>0:
             job.appends.append("+DESIRED_Sites = \""+self.sites+"\"")
             job.appends.append("+AvoidSystemPeriodicRemove = True")
         # special option for UMD

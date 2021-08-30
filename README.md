@@ -270,6 +270,7 @@ Default extra options:
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
 * `--env [args]`: args to run job in Singularity environment using cmssw-env (default = None)
 * `--intermediate`: specify that this is an intermediate job in a chain to disable staging out
+* `--singularity [image]`: specify singularity image for job (default = "")
 
 "Reserved", but not actually used by default:
 * `-o, --output [dir]`: path to output directory
