@@ -23,17 +23,20 @@ tar -xzf ${JOBNAME}.tar.gz
 
 # for checkpoints
 TOPDIR=$PWD
-CHECKPOINT_PRE=$PWD/checkpoints/${JOBNAME}
+CHECKPOINT_PRE=$PWD/checkpoints_${JOBNAME}
 mkdir -p ${CHECKPOINT_PRE}
 CHECKPOINT_FILE=checkpoint_${JOBNAME}_${PROCESS}
-CHECKPOINT_OUT=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.txt
+CHECKPOINT_TXT=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.txt
 CHECKPOINT_IN=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.sh
+CHECKPOINT_OUT=${TOPDIR}/${CHECKPOINT_FILE}.txt
 export CHECKPOINT_PREV=""
 export CHECKPOINT_CURR=""
 
 # check previous checkpoint
-if [ -f "$CHECKPOINT_OUT" ]; then
-	cp ${CHECKPOINT_OUT} ${CHECKPOINT_IN}
+if [ -f "$CHECKPOINT_TXT" ]; then
+	# default output: keep previous checkpoint
+	cp ${CHECKPOINT_TXT} ${CHECKPOINT_OUT}
+	cp ${CHECKPOINT_TXT} ${CHECKPOINT_IN}
 	CHECKPOINT_STEP=$(head -n 1 ${CHECKPOINT_IN} | cut -d' ' -f3)
 	if [ -n "$CHECKPOINT_STEP" ] && [ -n "$CHECKPOINT" ]; then
 		FIRST_STEP=${CHECKPOINT_STEP}
@@ -64,21 +67,26 @@ for ((i=${FIRST_STEP}; i<${NJOBS}; i++)); do
 		echo "Recovering output from ${JOB_CURR} ($JNAME)"
 		# need to get env from step1.sh?
 		source ${CHECKPOINT_IN}
+		CHECKEXIT=$?
+		if [[ $CHECKEXIT -ne 0 ]]; then
+			echo "exit code $CHECKEXIT, failure recovering output from ${JOB_CURR}"
+			exit $CHECKEXIT
+		fi
 	else
 		# advance to next checkpoint
 		# only if actually running job (not if recovering)
 		export CHECKPOINT_CURR=${CHECKPOINT_PRE}/${JOB_CURR}.sh
-		echo "source ${JOBDIR_BASE}/${JOB_CURR}/jobExecCondor.sh" >> ${CHECKPOINT_CURR}
+		# recovery will execute in job directory
+		echo "source jobExecCondor.sh" >> ${CHECKPOINT_CURR}
 
 		echo "Executing ${JOB_CURR} ($JNAME)"
 		./jobExecCondor.sh $ARGS
 		JOBEXIT=$?
 		if [[ $JOBEXIT -ne 0 ]]; then
-			echo "${JOB_CURR} ($JNAME) failed (exit code $JOBEXIT)"
-
 			# if first job failed, nothing to checkpoint
 			if [ -n "$CHECKPOINT" ] && [ -n "$CHECKPOINT_PREV" ]; then
 				# checkpoint: stageout files from previous step
+				echo "Making checkpoint for ${JOB_PREV}"
 				# in subshell just to be safe
 				(
 				cd ${JOBDIR_BASE}/${JOB_PREV}
@@ -89,8 +97,15 @@ for ((i=${FIRST_STEP}; i<${NJOBS}; i++)); do
 				# keep track of checkpointed job step number
 				sed -i '1s/^/# step '$((i-1))'\n/' ${CHECKPOINT_OUT}
 			fi
+
+			echo "${JOB_CURR} ($JNAME) failed (exit code $JOBEXIT)"
 			exit $JOBEXIT
 		fi
 	fi
 	cd ..
 done
+
+# make sure output file exists
+if [ ! -f "$CHECKPOINT_OUT" ]; then
+	touch ${CHECKPOINT_OUT}
+fi

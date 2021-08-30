@@ -51,6 +51,7 @@ def createChain(jdls,name,log,checkpoint):
             elif key==key_transfer:
                 for file in val.split(','):
                     file = file.strip()
+                    if len(file)==0: continue
                     # todo: find better way to handle "one input file per job" case
                     if "$(Process)" in file:
                         files = glob.glob(file.replace("$(Process)","*"))
@@ -89,15 +90,16 @@ def createChain(jdls,name,log,checkpoint):
     final["executable"] = "jobExecCondorChain.sh"
     # checkpoint info is kept using condor file transfer
     if checkpoint:
-        checkpoint_dir = "checkpoints/{}".format(name)
+        checkpoint_dir = "checkpoints_{}".format(name)
         checkpoint_fname1 = "checkpoint_{}_$(Process).txt".format(name)
         checkpoint_fname2 = "{}/{}".format(checkpoint_dir,checkpoint_fname1)
         final["should_transfer_files"] = "YES"
         final["transfer_output_files"] = checkpoint_fname1
-        final["transfer_output_remaps"] = "{} = {}".format(checkpoint_fname1,checkpoint_fname2)
+        final["transfer_output_remaps"] = '"{} = {}"'.format(checkpoint_fname1,checkpoint_fname2)
         # transfer whole dir to avoid having to make empty checkpoint files
-        final[key_transfer] = ','.join(final[key_transfer],checkpoint_dir)
+        final[key_transfer] = ','.join([final[key_transfer],checkpoint_dir])
         if not os.path.isdir(checkpoint_dir): os.makedirs(checkpoint_dir)
+        final["arguments"] += " -C"
     # write final jdl file
     finalname = "jobExecCondor_{}.jdl".format(name)
     with open(finalname,'w') as ffile:

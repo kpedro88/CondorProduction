@@ -5,9 +5,13 @@ stageOut() {
 	if [ $INTERCHAIN -eq 1 ]; then
 		# store current path, command, args to rerun later if needed
 		if [ -n "$CHECKPOINT_CURR" ]; then
+			# execute in subshell to avoid having to cd back
+			echo "(" >> ${CHECKPOINT_CURR}
 			PATH_TMP=$(realpath --relative-to=${JOBDIR_BASE}/${JOB_CURR} $PWD)
 			echo "mkdir -p $PATH_TMP && cd $PATH_TMP" >> ${CHECKPOINT_CURR}
-			echo "stageOut $@" >> ${CHECKPOINT_CURR}
+			# preserve quoting in args
+			echo "stageOut "$(printf '%q ' "$@") >> ${CHECKPOINT_CURR}
+			echo ")" >> ${CHECKPOINT_CURR}
 		fi
 
 		return 0
@@ -69,7 +73,7 @@ stageOut() {
 			;;
 			c) CLEANUP="$OPTARG"
 			;;
-			r) REVERSE=1
+			R) REVERSE=1
 			;;
 		esac
 	done
