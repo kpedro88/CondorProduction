@@ -86,7 +86,7 @@ stageOut() {
 	if [ "$REVERSE" -eq 1 ]; then
 		TMPPUT="$INPUT"
 		INPUT="$OUTPUT"
-		OUTPUT="$INPUT"
+		OUTPUT="$TMPPUT"
 		# ensure expected output directory exists
 		mkdir -p $(dirname $OUTPUT)
 	fi

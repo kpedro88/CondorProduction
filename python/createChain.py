@@ -27,6 +27,7 @@ def createChain(jdls,name,log,checkpoint):
             concat_next = False
             for line in jfile:
                 line = line.rstrip()
+                if len(line)==0: continue
                 if concat_next: lines[-1] += line
                 else: lines.append(line)
                 # detect and handle multi-line
