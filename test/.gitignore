@@ -5,3 +5,4 @@ step1.sh
 jobExecCondor.sh
 jobExecCondor.jdl
 jobExecCondorChain.sh
+manageJobs.py
