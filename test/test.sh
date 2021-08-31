@@ -72,6 +72,10 @@ else
 			xrdcp ${INDIR}/${INFNAME} tmp/
 			INDIR=tmp
 		fi
+		if [ ! -f ${INDIR}/${INFNAME} ]; then
+			echo "Missing input: ${INFNAME}"
+			exit 1
+		fi
 		cat ${INDIR}/${INFNAME} >> ${OUTFNAME}
 	fi
 
