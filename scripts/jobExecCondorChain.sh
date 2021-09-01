@@ -43,6 +43,9 @@ if [ -f "$CHECKPOINT_TXT" ]; then
 		# set up stagein commands (reverse of stageout)
 		sed -i 's/stageOut/stageOut -R/g' ${CHECKPOINT_IN}
 	fi
+# make sure output file exists (before running any jobs: avoid condor error message about missing output file)
+else
+	touch ${CHECKPOINT_OUT}
 fi
 
 # execute each job in series
@@ -104,8 +107,3 @@ for ((i=${FIRST_STEP}; i<${NJOBS}; i++)); do
 	fi
 	cd ..
 done
-
-# make sure output file exists
-if [ ! -f "$CHECKPOINT_OUT" ]; then
-	touch ${CHECKPOINT_OUT}
-fi
