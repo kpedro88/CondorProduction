@@ -23,12 +23,13 @@ tar -xzf ${JOBNAME}.tar.gz
 
 # for checkpoints
 TOPDIR=$PWD
-CHECKPOINT_PRE=$PWD/checkpoints_${JOBNAME}
+CHECKPOINT_PRE=${TOPDIR}/checkpoints_${JOBNAME}
 mkdir -p ${CHECKPOINT_PRE}
 CHECKPOINT_FILE=checkpoint_${JOBNAME}_${PROCESS}
 CHECKPOINT_TXT=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.txt
 CHECKPOINT_IN=${CHECKPOINT_PRE}/${CHECKPOINT_FILE}.sh
 CHECKPOINT_OUT=${TOPDIR}/${CHECKPOINT_FILE}.txt
+CHECKPOINT_BAK=${TOPDIR}/${CHECKPOINT_FILE}.bak
 export CHECKPOINT_PREV=""
 export CHECKPOINT_CURR=""
 
@@ -95,10 +96,16 @@ for ((i=${FIRST_STEP}; i<${NJOBS}; i++)); do
 				cd ${JOBDIR_BASE}/${JOB_PREV}
 				source ${CHECKPOINT_PREV}
 				)
-				# transfer back most recent checkpoint via condor
-				mv ${CHECKPOINT_PREV} ${CHECKPOINT_OUT}
-				# keep track of checkpointed job step number
-				sed -i '1s/^/# step '$((i-1))'\n/' ${CHECKPOINT_OUT}
+				CHEXIT=$?
+				if [[ $CHEXIT -ne 0 ]]; then
+					# keep previous checkpoint, if any, in this case
+					echo "Failed to make checkpoint (exit code $CHEXIT)"
+				else
+					# transfer back most recent checkpoint via condor
+					mv ${CHECKPOINT_PREV} ${CHECKPOINT_OUT}
+					# keep track of checkpointed job step number
+					sed -i '1s/^/# step '$((i-1))'\n/' ${CHECKPOINT_OUT}
+				fi
 			fi
 
 			echo "${JOB_CURR} ($JNAME) failed (exit code $JOBEXIT)"
