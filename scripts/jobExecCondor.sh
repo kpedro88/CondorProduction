@@ -133,6 +133,12 @@ getFromClassAd() {
 	fi
 }
 
+# needed when using Singularity container for SLC6 (also works for SLC7)
+export X509_CERT_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates
+export X509_VOMSES=/cvmfs/grid.cern.ch/etc/grid-security/vomses
+export VOMS_USERCONF=/cvmfs/grid.cern.ch/etc/grid-security/vomses
+export X509_VOMSDIR=/cvmfs/grid.cern.ch/etc/grid-security/vomsdir
+
 # check default arguments
 TOPDIR=$PWD
 export SCRIPTS=""
