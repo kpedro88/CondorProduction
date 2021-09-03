@@ -56,11 +56,13 @@ class protoJob(object):
         self.nums = []
         self.jdl = ""
         self.name = "job"
+        self.chainName = ""
 
     def __repr__(self):
         line = (
             "protoJob:\n"
             "\tname = "+str(self.name)+"\n"
+            "\tchainName = "+str(self.chainName)+"\n"
             "\tnjobs = "+str(self.njobs)+"\n"
             "\tjdl = "+str(self.jdl)+"\n"
             "\tqueue = "+str(self.queue)+"\n"
@@ -344,8 +346,13 @@ class jobSubmitter(object):
 
     def doMissing(self,job):
         jobSet, jobDict = self.findJobs(job)
+        # replace name if necessary
+        if len(job.chainName)>0:
+            runSetTmp = {x.replace(job.chainName,job.name) for x in self.runSet}
+        else:
+            runSetTmp = self.runSet
         # find difference
-        diffSet = jobSet - self.filesSet - self.runSet
+        diffSet = jobSet - self.filesSet - runSetTmp
         diffList = list(sorted(diffSet))
         if len(diffList)>0:
             if len(self.resub)>0:
@@ -464,7 +471,7 @@ class jobSubmitter(object):
         self.filesSet = self.filesSet - jobSet
 
         for jobname in finishedJobSet:
-            # gets .condor. .stdout, .stderr
+            # gets .condor, .stdout, .stderr
             for fname in glob.glob(jobname+"_*.*"):
                 shutil.move(fname,self.logdir)
 

@@ -90,6 +90,7 @@ At least one mode must be specified to run the script.
 
 Internally, `jobSubmitter` stores job information in a list `protoJobs`, where each entry is an instance of the class `protoJob`:
 * `name`: base name for the set of jobs (see [submit mode](#submit-mode))
+* `chainName`: alternate name if jobs are run in a chain (see [job chains](#job-chains) and [missing mode](#missing-mode))
 * `nums`: list of job numbers in this set (i.e. `$(Process)` values)
 * `njobs`: total number of jobs (used in [count mode](#count-mode))
 * `jdl`: JDL filename for this set of jobs
@@ -140,6 +141,8 @@ It also has an option `-u, --user [username]` to specify which user's jobs to ch
 The default value for `user` can be specified in the `.prodconfig` file (see [Configuration](#configuration)).
 The option `-q, --no-queue-arg` can also be used here; in this case, the JDL file will be modified
 with the list of jobs to be resubmitted (instead of using `-queue`).
+In case [job chains](#job-chains) are used, running jobs may have different names than the output files from finished jobs.
+The `protoJob.chainName` attribute is available to convert between the different naming schemes.
 
 This mode also relies on knowledge of HTCondor collectors and schedulers. Values for the LPC and CMS Connect
 are specified in the default `.prodconfig` file (see [Configuration](#configuration)).
