@@ -296,8 +296,8 @@ class jobSubmitter(object):
             ("SINGULARITYARGS",('+SingularityImage = "{}"'.format(self.singularity) if len(self.singularity)>0 else "")+("\nRequirements = HAS_SINGULARITY == True" if is_cms_connect else "")),
         ])
         # special option for CMS Connect
-        if is_cms_connect and len(self.sites)>0:
-            job.appends.append("+DESIRED_Sites = \""+self.sites+"\"")
+        if is_cms_connect:
+            if len(self.sites)>0: job.appends.append("+DESIRED_Sites = \""+self.sites+"\"")
             job.appends.append("+AvoidSystemPeriodicRemove = True")
         # special option for UMD
         if "umd.edu" in os.uname()[1]:
