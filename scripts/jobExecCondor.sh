@@ -3,6 +3,17 @@
 # helper function to stage out via xrdcp
 stageOut() {
 	if [ $INTERCHAIN -eq 1 ]; then
+		# store current path, command, args to rerun later if needed
+		if [ -n "$CHECKPOINT_CURR" ]; then
+			# execute in subshell to avoid having to cd back
+			echo "(" >> ${CHECKPOINT_CURR}
+			PATH_TMP=$(realpath --relative-to=${JOBDIR_BASE}/${JOB_CURR} $PWD)
+			echo "mkdir -p $PATH_TMP && cd $PATH_TMP" >> ${CHECKPOINT_CURR}
+			# preserve quoting in args
+			echo "stageOut "$(printf '%q ' "$@") >> ${CHECKPOINT_CURR}
+			echo ")" >> ${CHECKPOINT_CURR}
+		fi
+
 		return 0
 	fi
 
@@ -16,6 +27,7 @@ stageOut() {
 	CMDSTR="xrdcp"
 	REMOVE=0
 	CLEANUP=""
+	REVERSE=0
 
 	stageOut_usage() {
 		case `uname` in
@@ -35,11 +47,12 @@ stageOut() {
 		$ECHO "-q            \tquiet (don't print any messages)"
 		$ECHO "-r            \tremove local file if successfully copied"
 		$ECHO "-c files      \tcleanup: delete specified file(s) if copy fails"
+		$ECHO "-R            \treverse (stagein): swap input and output"
 	}
 
 	# set vars used by getopts to local
 	local OPTIND OPTARG
-	while getopts "i:o:w:n:x:gqrc:" opt; do
+	while getopts "i:o:w:n:x:gqrc:R" opt; do
 		case "$opt" in
 			i) INPUT="$OPTARG"
 			;;
@@ -60,12 +73,22 @@ stageOut() {
 			;;
 			c) CLEANUP="$OPTARG"
 			;;
+			R) REVERSE=1
+			;;
 		esac
 	done
 
 	if [[ -z "$INPUT" ]] || [[ -z "$OUTPUT" ]]; then
 		stageOut_usage
 		return 1
+	fi
+
+	if [ "$REVERSE" -eq 1 ]; then
+		TMPPUT="$INPUT"
+		INPUT="$OUTPUT"
+		OUTPUT="$TMPPUT"
+		# ensure expected output directory exists
+		mkdir -p $(dirname $OUTPUT)
 	fi
 
 	# try to copy n times, increasing wait each time
@@ -109,6 +132,12 @@ getFromClassAd() {
 		awk -v val="${ARGVAL}" -v rem="${ARG}" 'BEGIN { sub(rem,"",val) ; print val }'
 	fi
 }
+
+# needed when using Singularity container for SLC6 (also works for SLC7)
+export X509_CERT_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates
+export X509_VOMSES=/cvmfs/grid.cern.ch/etc/grid-security/vomses
+export VOMS_USERCONF=/cvmfs/grid.cern.ch/etc/grid-security/vomses
+export X509_VOMSDIR=/cvmfs/grid.cern.ch/etc/grid-security/vomsdir
 
 # check default arguments
 TOPDIR=$PWD

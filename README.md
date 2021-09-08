@@ -90,6 +90,7 @@ At least one mode must be specified to run the script.
 
 Internally, `jobSubmitter` stores job information in a list `protoJobs`, where each entry is an instance of the class `protoJob`:
 * `name`: base name for the set of jobs (see [submit mode](#submit-mode))
+* `chainName`: alternate name if jobs are run in a chain (see [job chains](#job-chains) and [missing mode](#missing-mode))
 * `nums`: list of job numbers in this set (i.e. `$(Process)` values)
 * `njobs`: total number of jobs (used in [count mode](#count-mode))
 * `jdl`: JDL filename for this set of jobs
@@ -140,6 +141,8 @@ It also has an option `-u, --user [username]` to specify which user's jobs to ch
 The default value for `user` can be specified in the `.prodconfig` file (see [Configuration](#configuration)).
 The option `-q, --no-queue-arg` can also be used here; in this case, the JDL file will be modified
 with the list of jobs to be resubmitted (instead of using `-queue`).
+In case [job chains](#job-chains) are used, running jobs may have different names than the output files from finished jobs.
+The `protoJob.chainName` attribute is available to convert between the different naming schemes.
 
 This mode also relies on knowledge of HTCondor collectors and schedulers. Values for the LPC and CMS Connect
 are specified in the default `.prodconfig` file (see [Configuration](#configuration)).
@@ -270,6 +273,7 @@ Default extra options:
 * `--sites [list]`: comma-separated list of sites for global pool running (if using CMS Connect) (default from `.prodconfig`)
 * `--env [args]`: args to run job in Singularity environment using cmssw-env (default = None)
 * `--intermediate`: specify that this is an intermediate job in a chain to disable staging out
+* `--singularity [image]`: specify singularity image for job (default = "")
 
 "Reserved", but not actually used by default:
 * `-o, --output [dir]`: path to output directory
@@ -352,11 +356,13 @@ The python script's options are:
 * `-n NAME, --name NAME`: name for chain job (required)
 * `-j JDLS [JDLS ...], --jdls JDLS [JDLS ...]`: full paths to JDL files (at least one required)
 * `-l LOG, --log LOG`: log name prefix from first job (will be replaced w/ chain job name)
+* `-c, --checkpoint`: enable checkpointing (if a job fails, save output files from previous job in chain)
 
 The shell script's options are:
 * `-J [jobname]`: name for chain job
 * `-N [number]`: number of jobs in chain
 * `-P [process]`: process number (used to substitute for `$(Process)` if found in individual job arguments)
+* `-C`: enable checkpointing (see above)
 
 Several caveats currently apply:
 * The argument `-q, --no-queue-arg` should be used when preparing individual jobs.
