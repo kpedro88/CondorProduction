@@ -248,6 +248,8 @@ def manageJobs(argv=None):
         parser.error("To gather the input file names, you must specify either a classad (-C) or the path (-L) to some logs and the key to parse them (-K), choose your method!")
     if options.xrootdResubmit and options.logKey and not options.logPath:
         parser.error("When specifying a key for log parsing you must also specify the path to the logs (-L)")
+    if options.xrootdResubmit and not options.inputFileClassAd and options.logPath and not options.logKey:
+        parser.error("When specifying a path for log parsing you must also specify the key with which to parse the logs (-K)")
     if len(options.xrootd)>0 and options.xrootd[0:7] != "root://" and options.xrootd[0] != "T":
         parser.error("Improper xrootd address: "+options.xrootd)
     if len(options.user)==0:
@@ -288,18 +290,15 @@ def manageJobs(argv=None):
             elif options.xrootdResubmit:
                 fprint("")
                 file_and_site_per_file = {}
-                try:
-                    file_and_site_per_file = find_input_file_site_per_job(
-                        classad = options.inputFileClassAd,
-                        condor_jobs = jobs,
-                        log_key = options.logKey if options.logKey and options.logPath else "",
-                        log_path = options.logPath if options.logKey and options.logPath else "",
-                        prefer_us_sites = options.preferUSSites,
-                        verbose = options.verbose,
-                    )
-                except Exception as e:
-                    fprint(e)
-                    return
+                file_and_site_per_file = find_input_file_site_per_job(
+                    classad = options.inputFileClassAd,
+                    condor_jobs = jobs,
+                    log_key = options.logKey if options.logKey and options.logPath else "",
+                    log_path = options.logPath if options.logKey and options.logPath else "",
+                    preferred_sites = parser_dict["manage"]["preferredsites"].split(",") if "preferredsites" in parser_dict["manage"].keys() else None,
+                    prefer_us_sites = options.preferUSSites,
+                    verbose = options.verbose,
+                )
 
                 jobs_resubmitted = {}
                 jobs_not_resubmitted = {}
