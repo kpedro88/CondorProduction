@@ -105,7 +105,7 @@ def find_input_file_site_per_job(classad = "", condor_jobs = None, log_key = "",
         file_per_job = get_input_file(log_path, condor_jobs, log_key, verbose)
     else:
         fprint("file_finder.py: error: You must select a method to obtain the input file information (--classad and/or --log_path/--log_key).")
-        sys.exit(3)
+        sys.exit(2)
     
     file_and_site_per_file = find_site(file_per_job, preferred_sites, prefer_us_sites, verbose)
 
