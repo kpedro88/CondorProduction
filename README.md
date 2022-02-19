@@ -328,8 +328,8 @@ It uses a number of command line options to specify how to display job informati
 * `-w, --why`: show why a job was held
 * `-m, --matched`: show site and machine to which the job matched (for CMS Connect)
 * `-p, --progress`: show job progress (time and nevents)
-* `-X, --root-resubmit`: resubmit the jobs based on where the input files are located
-* `-C INPUTFILECLASSAS, --input-file-classad=INPUTFILECLASSAS`: HTCondor ClassAd which contains the input file(s) being used within the job (used in combination with `-X`)
+* `-X, --xrootd-resubmit`: resubmit the jobs based on where the input files are located
+* `-C INPUTFILECLASSAD, --input-file-classad=INPUTFILECLASSAD`: HTCondor ClassAd which contains the input file(s) being used within the job (used in combination with `-X`)
 * `-D, --dry-run`: don't actually resubmit any jobs (used in combination with `-X`)
 * `-K LOGKEY, --log_key=LOGKEY`: key to use to find the correct line(s) in the log file (used in combination with `-X`)
 * `-L LOGPATH, --log_path=LOGPATH`: path to the job logs (used in combination with `-X`, default = `pwd`)
@@ -350,6 +350,7 @@ is located and some user preferences. Therefore, the options `-X` and `-s` are e
 are only applicable when using the option `-X`. There are two ways in which the program can find the appropriate input file(s) for the job:
 1. specify an HTCondor ClassAd name, where the ClassAd contains a comma separated list of files (`-C`).
 2. specify the location of a set of log files and a key with which to parse the logs files (`-L`/`-K`). It is expected that the log will contain a single line with a comma separated list of files.
+
 This is similar in spirit to using the `-x` option, except in that case all of the resubmitted jobs will try to access the input files from a user specified location. In this case,
 the user doesn't specify a particular location, but a set of loose preferences (more on that in a moment). If both the `-X` and `-x` options are specified, then the jobs will preferentially
 read their input from the site found using the automated mechanism. However, if no suitable site can be found, then the job will be resubmitted using the xrootd redirector (or site name) specified
@@ -363,6 +364,8 @@ When using the `-X` option, a user may indicate a preference for specific sites 
 preferredsites = [sites]
 ```
 where `[sites]` is a comma separated list of site names in descending order of preference.
+
+Limitation: the `-X` option relies upon `dasgoclient` for finding the site information for a given file. It is therefore limited by the accuracy of `DAS` and only works for centrally produced/tracked input files.
 
 ## Job chains
 
