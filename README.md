@@ -358,14 +358,9 @@ by the `-x` option.
 
 When using the `-X` option, a user may indicate a preference for specific sites in two ways:
 1. The user can broadly prefer sites located in the United States using the `-U` option
-2. The user can add a list of sites to the `.prodconfig` file of the form:
-```ini
-[manage]
-preferredsites = [sites]
-```
-where `[sites]` is a comma separated list of site names in descending order of preference.
+2. The user can specify a list of preferred sites using the `.prodconfig` file (see [Configuration](#configuration))
 
-Limitation: the `-X` option relies upon `dasgoclient` for finding the site information for a given file. It is therefore limited by the accuracy of `DAS` and only works for centrally produced/tracked input files.
+Limitation: the `-X` option relies upon [dasgoclient](https://github.com/dmwm/dasgoclient) for finding the site information for a given file. It is therefore limited by the accuracy of [DAS](https://cmsweb.cern.ch/das/) and only works for centrally produced/tracked [CMS](https://cms.cern/) input files.
 
 ## Job chains
 
@@ -416,12 +411,13 @@ Expected categories and values:
 * `manage`:
     * `dir = [dir]`: backup directory for logs from failing jobs
     * `defaultredir = [dir]`: default xrootd redirector (if using site name)
+    * `preferredsites = [site(s)]`: list of preferred sites for input file specific job resubmission (comma-separated list, descending order of preference)
 * `collectors`:
     * `[name] = [server(s)]`: name and associated collector server(s) (comma-separated list)
 * `schedds`:
     * `[name] = [server(s)]`: name and associated schedd server(s) (comma-separated list)
 * `caches`:
-	* `[dir] = [val]`: directory and cache status (1 = cache, 0 = uncache) (one entry per directory)
+    * `[dir] = [val]`: directory and cache status (1 = cache, 0 = uncache) (one entry per directory)
 
 The name used for the collector and associated schedd(s) must match.
 
