@@ -1,5 +1,6 @@
 import sys,os,subprocess,glob,shutil,json
-from optparse import OptionParser
+from optparse import OptionParser, OptionGroup
+from file_finder import find_input_file_site_per_job, fprint
 
 # try to find condor bindings
 for condorPath in ["/usr/lib64/python2.6/site-packages", "/usr/lib64/python2.7/site-packages"]:
@@ -10,7 +11,7 @@ import htcondor,classad
 from parseConfig import list_callback, parser_dict
 
 class CondorJob(object):
-    def __init__(self, result, schedd):
+    def __init__(self, options, result, schedd):
         self.stdout = result["Out"].replace(".stdout","")
         self.name = "_".join(self.stdout.split('_')[:-1])
         self.num = str(result["ClusterId"])+"."+str(result["ProcId"])
@@ -34,6 +35,8 @@ class CondorJob(object):
         self.time = (float(result["ChirpCMSSWElapsed"]) if "ChirpCMSSWElapsed" in result.keys() else 0.0)/float(3600)
         self.events = int(result["ChirpCMSSWEvents"]) if "ChirpCMSSWEvents" in result.keys() else 0
         self.rate = float(self.events)/(self.time*3600) if self.time>0 else 0
+        if options.inputFileClassAd in result.keys():
+            self.inputFiles = result[options.inputFileClassAd]
 
 def getJob(options,result,jobs,scheddurl=""):
     # check greps
@@ -58,7 +61,7 @@ def getJob(options,result,jobs,scheddurl=""):
         tdiff = time - update
         if time>0 and update>0 and tdiff>(options.stuckThreshold*3600): result["HoldReason"] = "Job stuck for "+str(tdiff/3600)+" hours"
         else: return
-    jobs.append(CondorJob(result,scheddurl))
+    jobs.append(CondorJob(options,result,scheddurl))
 
 def getSchedd(scheddurl,coll=""):
     if len(scheddurl)>0:
@@ -85,6 +88,8 @@ def getJobs(options, scheddurl=""):
     # get info for selected jobs
     jobs = []
     props = ["ClusterId","ProcId","HoldReason","Out","Args","Arguments","JobStatus","ServerTime","ChirpCMSSWLastUpdate","ChirpCMSSWElapsed","ChirpCMSSWEvents","DESIRED_Sites","MATCH_EXP_JOB_GLIDEIN_CMSSite","RemoteHost","LastRemoteHost"]
+    if options.inputFileClassAd:
+        props.append(options.inputFileClassAd)
     if options.finished>0:
         for result in schedd.history(constraint,props,options.finished):
             getJob(options,result,jobs,scheddurl)
@@ -204,6 +209,17 @@ def manageJobs(argv=None):
     parser.add_option("-w", "--why", dest="why", default=False, action="store_true", help="show why a job was held (default = %default)")
     parser.add_option("-m", "--matched", dest="matched", default=False, action="store_true", help="show site and machine to which the job matched (default = %default)")
     parser.add_option("-p", "--progress", dest="progress", default=False, action="store_true", help="show job progress (time and nevents) (default = %default)")
+    parser.add_option("-X", "--xrootd-resubmit", dest="xrootdResubmit", default=False, action="store_true", help="resubmit the jobs based on where the input files are located (default = %default)")
+    group = OptionGroup(parser, "Site Specific Resubmit Options",
+                        "The options for resubmitting jobs based on where their input files are stored (-X, --xrootd-resubmit).")
+    group.add_option("-C", "--input-file-classad", dest="inputFileClassAd", default = "", type="string", help = "HTCondor ClassAd which contains the input file(s) being used within the job (default = %default)")
+    group.add_option("-D", "--dry-run", dest="dryRun", default=False, action="store_true", help="don't actually resubmit any jobs (default = %default)")
+    group.add_option("-K", "--log_key", dest="logKey", default = "", type="string", help="key to use to find the correct line(s) in the log file (default = %default)")
+    group.add_option("-L", "--log_path", dest="logPath", default = os.environ["PWD"], type="string", help = "path to the job logs (default = %default)")
+    group.add_option("-O", "--xrootd-resubmit-options-other", dest="xrootdResubmitOptionsOther", default="", type="string", help = "other options to supply to file_finder_resubmitter.py (default = %default)")
+    group.add_option("-U", "--prefer-us-sites", dest="preferUSSites", action = "store_true", default = False, help = "prefer reading inputs from US sites over others (default = %default)")
+    group.add_option("-V", "--verbose", dest="verbose", action = "store_true", default = False, help = "be more verbose when printing out the resubmission information for each job (default = %default)")
+    parser.add_option_group(group)
     parser.add_option("--add-sites", dest="addsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to add (default = %default)')
     parser.add_option("--rm-sites", dest="rmsites", default=[], type="string", action="callback", callback=list_callback, help='comma-separated list of global pool sites to remove (default = %default)')
     parser.add_option("--stuck-threshold", dest="stuckThreshold", default=12, help="threshold in hours to define stuck jobs (default = %default)")
@@ -224,6 +240,16 @@ def manageJobs(argv=None):
         parser.error("Options -h, -r, -i, -f are exclusive, pick one!")
     if options.resubmit and options.kill:
         parser.error("Can't use -s and -k together, pick one!")
+    if options.xrootdResubmit and options.kill:
+        parser.error("Can't use -X and -k together, pick one!")
+    if options.inputFileClassAd and options.logKey:
+        parser.error("Can't use -C and -L/-K together, pick one!")
+    if options.xrootdResubmit and not options.inputFileClassAd and not options.logKey:
+        parser.error("To gather the input file names, you must specify either a classad (-C) or the path (-L) to some logs and the key to parse them (-K), choose your method!")
+    if options.xrootdResubmit and options.logKey and not options.logPath:
+        parser.error("When specifying a key for log parsing you must also specify the path to the logs (-L)")
+    if options.xrootdResubmit and not options.inputFileClassAd and options.logPath and not options.logKey:
+        parser.error("When specifying a path for log parsing you must also specify the key with which to parse the logs (-K)")
     if len(options.xrootd)>0 and options.xrootd[0:7] != "root://" and options.xrootd[0] != "T":
         parser.error("Improper xrootd address: "+options.xrootd)
     if len(options.user)==0:
@@ -242,6 +268,7 @@ def manageJobs(argv=None):
     if options.finished>0:
         options.resubmit = False
         options.kill = False
+        options.xrootdResubmit = False
         
     if options.all: all_nodes = parser_dict["schedds"]["fnal"].split(',')
     else: all_nodes = [""]
@@ -249,7 +276,7 @@ def manageJobs(argv=None):
         jobs = getJobs(options,sch)
         if len(jobs)>0:
             if len(sch)>0: print sch
-            printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
+            if not options.xrootdResubmit: printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
 
             # resubmit or remove jobs
             if options.resubmit:
@@ -260,7 +287,52 @@ def manageJobs(argv=None):
                 # actions that can be applied to all jobs
                 jobnums = [j.num for j in jobs]
                 schedd.act(htcondor.JobAction.Remove,jobnums)
+            elif options.xrootdResubmit:
+                fprint("")
+                file_and_site_per_file = {}
+                file_and_site_per_file = find_input_file_site_per_job(
+                    classad = options.inputFileClassAd,
+                    condor_jobs = jobs,
+                    log_key = options.logKey if options.logKey and options.logPath else "",
+                    log_path = options.logPath if options.logKey and options.logPath else "",
+                    preferred_sites = parser_dict["manage"]["preferredsites"].split(",") if "preferredsites" in parser_dict["manage"].keys() else None,
+                    prefer_us_sites = options.preferUSSites,
+                    verbose = options.verbose,
+                )
 
+                jobs_resubmitted = {}
+                jobs_not_resubmitted = {}
+                if options.verbose:
+                    fprint("Resubmitting jobs (dryRun = " + str(options.dryRun) + ") ...", False)
+                original_xrootd_option = options.xrootd
+                for job, (file, site, sites) in file_and_site_per_file.iteritems():
+                    if site is None and not options.xrootd:
+                        jobs_not_resubmitted[job.stdout if options.stdout else job.name] = (file, site, sites)
+                    else:
+                        jobs_resubmitted[job.stdout if options.stdout else job.name] = (file, site, sites)
+                        if not options.dryRun:
+                            options.xrootd = site if site is not None else original_xrootd_option
+                            resubmitJobs([job],options,sch)
+                if options.verbose:
+                    fprint("DONE\n")
+
+                fprint("Jobs resubmitted:")
+                fmt = "\t{0:>80s}: file={1:<100s} site={2:<20s}"
+                fprint(
+                    "\n".join([
+                        (fmt.format(job,file,site) if options.verbose else "\t" + job)
+                        for job, (file, site, sites) in jobs_resubmitted.iteritems()
+                    ])
+                )
+
+                fprint("\nJobs not resubmitted due to lack of an acceptable site:")
+                fmt = "\t{0:>80s}: file={1:<100s} sites={2:<30s}"
+                fprint(
+                    "\n".join([
+                        (fmt.format(job,file,str(sites)) if options.verbose else "\t"+job)
+                        for job, (file, site, sites) in jobs_not_resubmitted.iteritems()
+                    ])
+                )
 
 if __name__=="__main__":
     manageJobs()
