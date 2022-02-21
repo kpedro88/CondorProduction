@@ -21,19 +21,19 @@ def find_nth(haystack, needle, n):
 def find_site(file_per_job, preferred_sites = None, prefer_us_sites = False, verbose = False):
     file_and_site_per_job = {}
     if verbose:
-        fprint("Finding the sites for each file ...", False)
+        fprint("Finding the sites for each file ...", True)
     for i, (job, file) in enumerate(file_per_job.iteritems()):
         if file is None:
             file_and_site_per_job[job] = (file,None,[None])
         else:
             cmd = "dasgoclient -query=\"site file=" + file + "\""
+            if verbose:
+                fprint("\t" + cmd, True)
             p = subprocess.Popen(cmd, shell = True, stdout=subprocess.PIPE)
             out, err = p.communicate()
             sites = [None] if "WARNING:" in out else out.split()
             site = select_site(sites, preferred_sites, prefer_us_sites)
             file_and_site_per_job[job] = (file,site,sites)
-    if verbose:
-        fprint("DONE")
     return file_and_site_per_job
 
 def get_input_file(basepath, jobs, key, verbose = False):
