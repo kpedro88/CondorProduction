@@ -79,7 +79,7 @@ def lines_that_contain(string, fp):
 def select_site(sites, preferred_sites = None, prefer_us_sites = False):
     selected = None
     sites = [s.replace("_Disk","") for s in sites if s is not None and "Tape" not in s]
-    sites = sorted(sites, key = lambda x: ("US" in x.split('_')[1] and prefer_us_sites), reverse = True)
+    sites = sorted(sites, key = lambda x: (prefer_us_sites and "US" in x.split('_')[1]), reverse = True)
     if preferred_sites is not None:
         for psite in reversed(preferred_sites):
             if psite in sites:
