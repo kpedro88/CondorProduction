@@ -18,7 +18,7 @@ def find_nth(haystack, needle, n):
         n -= 1
     return start
 
-def find_site(file_per_job, preferred_sites = None, prefer_us_sites = False, verbose = False):
+def find_site(file_per_job, preferred_sites = None, prefer_us_sites = False, blacklisted_sites = None, verbose = False):
     file_and_site_per_job = {}
     if verbose:
         fprint("Finding the sites for each file ...", True)
@@ -32,7 +32,7 @@ def find_site(file_per_job, preferred_sites = None, prefer_us_sites = False, ver
             p = subprocess.Popen(cmd, shell = True, stdout=subprocess.PIPE)
             out, err = p.communicate()
             sites = [None] if "WARNING:" in out else out.split()
-            site = select_site(sites, preferred_sites, prefer_us_sites)
+            site = select_site(sites, preferred_sites, prefer_us_sites, blacklisted_sites)
             file_and_site_per_job[job] = (file,site,sites)
     return file_and_site_per_job
 
@@ -76,9 +76,10 @@ def get_input_file_from_classad(jobs, classad, verbose = False):
 def lines_that_contain(string, fp):
     return [line for line in fp if string in line]
 
-def select_site(sites, preferred_sites = None, prefer_us_sites = False):
+def select_site(sites, preferred_sites = None, prefer_us_sites = False, blacklisted_sites = None):
     selected = None
     sites = [s.replace("_Disk","") for s in sites if s is not None and "Tape" not in s]
+    sites = [s for s in sites if s not in blacklisted_sites]
     sites = sorted(sites, key = lambda x: (prefer_us_sites and "US" in x.split('_')[1]), reverse = True)
     if preferred_sites is not None:
         for psite in reversed(preferred_sites):
@@ -88,7 +89,14 @@ def select_site(sites, preferred_sites = None, prefer_us_sites = False):
         selected = sites[0]
     return selected
 
-def find_input_file_site_per_job(classad = "", condor_jobs = None, log_key = "", log_path = "", preferred_sites = None, prefer_us_sites = False, verbose = False):
+def find_input_file_site_per_job(blacklisted_sites = None,
+                                 classad = "",
+                                 condor_jobs = None,
+                                 log_key = "",
+                                 log_path = "",
+                                 preferred_sites = None,
+                                 prefer_us_sites = False,
+                                 verbose = False):
     if condor_jobs is None:
         return
 
@@ -107,7 +115,7 @@ def find_input_file_site_per_job(classad = "", condor_jobs = None, log_key = "",
         fprint("file_finder.py: error: You must select a method to obtain the input file information (--classad and/or --log_path/--log_key).")
         sys.exit(2)
     
-    file_and_site_per_file = find_site(file_per_job, preferred_sites, prefer_us_sites, verbose)
+    file_and_site_per_file = find_site(file_per_job, preferred_sites, prefer_us_sites, blacklisted_sites, verbose)
 
     return file_and_site_per_file
 
