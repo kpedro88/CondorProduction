@@ -212,7 +212,7 @@ def manageJobs(argv=None):
     parser.add_option("-X", "--xrootd-resubmit", dest="xrootdResubmit", default=False, action="store_true", help="resubmit the jobs based on where the input files are located (default = %default)")
     group = OptionGroup(parser, "Site Specific Resubmit Options",
                         "The options for resubmitting jobs based on where their input files are stored (-X, --xrootd-resubmit).")
-    group.add_option("-B", "--blacklist-sites", dest="blacklistedSites", default = [], type = "string", action="callback", callback=list_callback, help = "comma-separated list of global pool sites to reject (default = %default)")
+    group.add_option("-B", "--blacklist-sites", dest="blacklistedSites", default = parser_dict["manage"]["blacklistedsites"], type = "string", action="callback", callback=list_callback, help = "comma-separated list of global pool sites to reject (default = %default)")
     group.add_option("-C", "--input-file-classad", dest="inputFileClassAd", default = "", type="string", help = "HTCondor ClassAd which contains the input file(s) being used within the job (default = %default)")
     group.add_option("-D", "--dry-run", dest="dryRun", default=False, action="store_true", help="don't actually resubmit any jobs (default = %default)")
     group.add_option("-K", "--log_key", dest="logKey", default = "", type="string", help="key to use to find the correct line(s) in the log file (default = %default)")
@@ -292,7 +292,7 @@ def manageJobs(argv=None):
                 fprint("")
                 file_and_site_per_file = {}
                 file_and_site_per_file = find_input_file_site_per_job(
-                    blacklisted_sites = options.blacklistedSites + (parser_dict["manage"]["blacklistedsites"].split(",") if "blacklistedsites" in parser_dict["manage"].keys() else []),
+                    blacklisted_sites = options.blacklistedSites,
                     classad = options.inputFileClassAd,
                     condor_jobs = jobs,
                     log_key = options.logKey if options.logKey and options.logPath else "",
