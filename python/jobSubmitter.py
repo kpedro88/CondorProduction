@@ -1,7 +1,15 @@
 import os, subprocess, sys, stat, glob, shutil, tarfile
 from optparse import OptionParser
 from collections import defaultdict, OrderedDict
+from datetime import datetime
 from parseConfig import list_callback, parser_dict
+
+def date_convert(value):
+    return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+
+def date_callback(option, opt, value, parser):
+    if value is None: return
+    setattr(parser.values, option.dest, date_convert(value))
 
 # minimal sed-like function
 # patterns = [(in,out),(in,out)]
@@ -15,15 +23,18 @@ def pysed(lines,out,patterns):
             outfile.write(linetmp)
 
 # run xrdfs ls using physical file name
-def pyxrdfsls(pfn):
+def pyxrdfsls(pfn, minDate=None, maxDate=None):
     psplit = pfn.find("/store")
     lfn = pfn[psplit:]
     xrd = pfn[:psplit]
+    checkDates = minDate is not None or maxDate is not None
+    extra = " -l " if checkDates else ""
+
     # todo: replace w/ XRootD python bindings?
-    return filter(
+    results = filter(
         None,
         subprocess.Popen(
-            "xrdfs "+xrd+" ls "+lfn,
+            "xrdfs "+xrd+" ls "+extra+lfn,
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -31,6 +42,12 @@ def pyxrdfsls(pfn):
             env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
         ).communicate()[0].split('\n')
     )
+
+    if checkDates:
+        dates = [date_convert(' '.join(line.split()[1:3])) for line in results]
+        results = [line.split()[-1] for line,date in zip(results,dates) if (minDate is None or date>minDate) and (maxDate is None or date<maxDate)]
+
+    return results
 
 # run xrdcp
 def pyxrdcp(a,b,verbose=True):
@@ -162,6 +179,8 @@ class jobSubmitter(object):
         parser.add_option("-s", "--submit", dest="submit", default=False, action="store_true", help="submit jobs to condor (default = %default)")
         parser.add_option("-m", "--missing", dest="missing", default=False, action="store_true", help="check for missing jobs (default = %default)")
         parser.add_option("-r", "--resub", dest="resub", default="", help="make a resub script with specified name (default = %default)")
+        parser.add_option("--min-date", dest="minDate", type="string", default=None, action="callback", callback=date_callback, help="minimum date for files in missing mode (default = %default)")
+        parser.add_option("--max-date", dest="maxDate", type="string", default=None, action="callback", callback=date_callback, help="maximum date for files in missing mode (default = %default)")
         parser.add_option("-l", "--clean", dest="clean", default=False, action="store_true", help="clean up log files (default = %default)")
         parser.add_option("--clean-dir", dest="cleanDir", default=".", help="output dir for log file .tar.gz (default = %default)")
         parser.add_option("-u", "--user", dest="user", default=parser_dict["common"]["user"], help="view jobs from this user (submitter) (default = %default)")
@@ -401,7 +420,7 @@ class jobSubmitter(object):
         # find finished jobs via output file list
         filesSet = set()
         if hasattr(self,"output"):
-            files = pyxrdfsls(self.output)
+            files = pyxrdfsls(self.output,self.minDate,self.maxDate)
             # basename
             filesSet = set([ self.finishedToJobName(f) for f in files])
         return filesSet

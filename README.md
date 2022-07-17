@@ -143,6 +143,7 @@ The option `-q, --no-queue-arg` can also be used here; in this case, the JDL fil
 with the list of jobs to be resubmitted (instead of using `-queue`).
 In case [job chains](#job-chains) are used, running jobs may have different names than the output files from finished jobs.
 The `protoJob.chainName` attribute is available to convert between the different naming schemes.
+To facilitate in-place updates of output files, date ranges can be specified using the `--min-date` and `--max-date` options.
 
 This mode also relies on knowledge of HTCondor collectors and schedulers. Values for the LPC and CMS Connect
 are specified in the default `.prodconfig` file (see [Configuration](#configuration)).
@@ -253,6 +254,8 @@ One shell argument is effectively reserved if the user wants to use the [job man
 * `-p, --prepare`: prepare JDL file(s) and any associated job inputs
 * `-s, --submit`: submit jobs to Condor
 * `-m, --missing`: check for missing jobs
+* `--min-date`: minimum date for files in missing mode
+* `--max-date`: minimum date for files in missing mode
 * `-r, --resub [script_name.sh]`: create resubmission script
 * `-l, --clean`: clean up log files
 * `--clean-dir`: output dir for log file .tar.gz (default = ".")
