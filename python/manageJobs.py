@@ -312,9 +312,10 @@ def manageJobs(argv=None):
                         jobs_not_resubmitted[job.stdout if options.stdout else job.name] = (file, site, sites)
                     else:
                         jobs_resubmitted[job.stdout if options.stdout else job.name] = (file, site, sites)
+                        options.xrootd = site if site is not None else original_xrootd_option
                         if not options.dryRun:
-                            options.xrootd = site if site is not None else original_xrootd_option
                             resubmitJobs([job],options,sch)
+                        options.xrootd = original_xrootd_option
                 if options.verbose:
                     fprint("DONE\n")
 
