@@ -4,7 +4,7 @@ scripts = checkVomsTar.sh,jobExecCondor.jdl,jobExecCondor.sh,step1.sh,jobExecCon
 fnal = cmssrv268.fnal.gov,cmssrv605.fnal.gov
 cmscon = login.uscms.org
 [schedds]
-fnal = lpcschedd1.fnal.gov,lpcschedd2.fnal.gov,lpcschedd3.fnal.gov
+fnal = lpcschedd1.fnal.gov,lpcschedd2.fnal.gov,lpcschedd3.fnal.gov,lpcschedd4.fnal.gov,lpcschedd5.fnal.gov
 cmscon = login-el7.uscms.org
 [caches]
 $CMSSW_BASE/tmp = 1
