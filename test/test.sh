@@ -53,6 +53,9 @@ if [ -z "$PART" ]; then
 	echo ""
 	echo "Current environment:"
 	printenv
+	echo ""
+	echo "Python: $(which python3)"
+	python3 -c 'import uproot; print(uproot.__file__,uproot.__version__)'
 # IO mode
 else
 	echo "parameter set:"

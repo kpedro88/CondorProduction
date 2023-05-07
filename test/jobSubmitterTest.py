@@ -3,7 +3,7 @@ from Condor.Production.jobSubmitter import *
 class jobSubmitterTest(jobSubmitter):
     def __init__(self):
         super(jobSubmitterTest,self).__init__()
-        self.scripts = ["test.sh"]
+        self.scripts = ["step1.sh","test.sh"]
 
     def addExtraOptions(self,parser):
         super(jobSubmitterTest,self).addExtraOptions(parser)
