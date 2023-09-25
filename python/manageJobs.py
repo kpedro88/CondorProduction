@@ -1,4 +1,5 @@
-import sys,os,subprocess,glob,shutil,json
+from __future__ import print_function
+import sys,os,subprocess,glob,shutil,json,six
 from optparse import OptionParser, OptionGroup
 from file_finder import find_input_file_site_per_job, fprint
 
@@ -71,7 +72,7 @@ def getSchedd(scheddurl,coll=""):
             scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, scheddurl)
             schedd = htcondor.Schedd(scheddAd)
         except:
-            print "Warning: could not locate schedd "+scheddurl
+            print("Warning: could not locate schedd "+scheddurl)
             return None
     else:
         schedd = htcondor.Schedd() # defaults to local
@@ -101,14 +102,14 @@ def getJobs(options, scheddurl=""):
 def printJobs(jobs, num=False, prog=False, stdout=False, why=False, matched=False):
     if len(jobs)==0: return
     
-    print "\n".join([
+    print("\n".join([
         (j.stdout if stdout else j.name)+
         (" ("+j.num+")" if num else "")+
         (" ({:d} events in {:.1f} hours = {:.1f} evt/sec)".format(j.events,j.time,j.rate) if prog else "")+
         (" : "+j.matched+", "+j.machine if matched and len(j.matched)>0 and len(j.machine)>0 else "")+
         (" : "+j.why if why and len(j.why)>0 else "")
         for j in jobs
-    ])
+    ]))
 
 def resubmitJobs(jobs,options,scheddurl=""):
     # get scheduler
@@ -119,7 +120,7 @@ def resubmitJobs(jobs,options,scheddurl=""):
         try:
             edits = json.loads(options.edit)
         except:
-            print "edit not specified in JSON format! Exiting."
+            print("edit not specified in JSON format! Exiting.")
             sys.exit(1)
     # create backup dir if desired
     backup_dir = ""
@@ -179,7 +180,7 @@ def resubmitJobs(jobs,options,scheddurl=""):
             if rmsite in sitelist: del sitelist[sitelist.index(rmsite)]
         schedd.edit(jobnums,"DESIRED_Sites",'"'+','.join(sitelist)+'"')
     # any other classad edits
-    for editname,editval in edits.iteritems():
+    for editname,editval in six.iteritems(edits):
         schedd.edit(jobnums,str(editname),str(editval))
     # release jobs (unless idle - then no need to release)
     if not options.idle:
@@ -276,7 +277,7 @@ def manageJobs(argv=None):
     for sch in all_nodes:
         jobs = getJobs(options,sch)
         if len(jobs)>0:
-            if len(sch)>0: print sch
+            if len(sch)>0: print(sch)
             if not options.xrootdResubmit: printJobs(jobs,options.num,options.progress,options.stdout,options.why,options.matched)
 
             # resubmit or remove jobs
@@ -307,7 +308,7 @@ def manageJobs(argv=None):
                 if options.verbose:
                     fprint("Resubmitting jobs (dryRun = " + str(options.dryRun) + ") ...", False)
                 original_xrootd_option = options.xrootd
-                for job, (file, site, sites) in file_and_site_per_file.iteritems():
+                for job, (file, site, sites) in six.iteritems(file_and_site_per_file):
                     if site is None and not options.xrootd:
                         jobs_not_resubmitted[job.stdout if options.stdout else job.name] = (file, site, sites)
                     else:
@@ -324,7 +325,7 @@ def manageJobs(argv=None):
                 fprint(
                     "\n".join([
                         (fmt.format(job,file,site) if options.verbose else "\t" + job)
-                        for job, (file, site, sites) in jobs_resubmitted.iteritems()
+                        for job, (file, site, sites) in six.iteritems(jobs_resubmitted)
                     ])
                 )
 
@@ -333,7 +334,7 @@ def manageJobs(argv=None):
                 fprint(
                     "\n".join([
                         (fmt.format(job,file,str(sites)) if options.verbose else "\t"+job)
-                        for job, (file, site, sites) in jobs_not_resubmitted.iteritems()
+                        for job, (file, site, sites) in six.iteritems(jobs_not_resubmitted)
                     ])
                 )
 

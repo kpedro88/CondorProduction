@@ -1,13 +1,15 @@
+from __future__ import print_function
 import os
 import subprocess
 import sys
+import six
 
 def fprint(msg, newline=True):
     import sys
     if newline:
-        print msg
+        print(msg)
     else:
-        print msg,
+        print(msg,)
     sys.stdout.flush()
 
 #From: https://stackoverflow.com/questions/1883980/find-the-nth-occurrence-of-substring-in-a-string
@@ -22,7 +24,7 @@ def find_site(file_per_job, preferred_sites = None, prefer_us_sites = False, bla
     file_and_site_per_job = {}
     if verbose:
         fprint("Finding the sites for each file ...", True)
-    for i, (job, file) in enumerate(file_per_job.iteritems()):
+    for i, (job, file) in enumerate(six.iteritems(file_per_job)):
         if file is None:
             file_and_site_per_job[job] = (file,None,[None])
         else:

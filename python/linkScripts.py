@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from optparse import OptionParser
 from parseConfig import parser_dict
@@ -12,7 +13,7 @@ def linkScripts(dir):
             os.symlink(scriptpath,scriptmp)
             os.rename(scriptmp,script)
         else:
-            print "Cannot locate "+script+" in "+dir
+            print("Cannot locate "+script+" in "+dir)
 
 if __name__=="__main__":
     parser = OptionParser()

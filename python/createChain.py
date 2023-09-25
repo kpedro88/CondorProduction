@@ -1,4 +1,4 @@
-import os, shutil, tarfile, glob
+import os, shutil, tarfile, glob, six
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from collections import OrderedDict, defaultdict
 
@@ -104,7 +104,7 @@ def createChain(jdls,name,log,checkpoint):
     # write final jdl file
     finalname = "jobExecCondor_{}.jdl".format(name)
     with open(finalname,'w') as ffile:
-        ffile.write('\n'.join([key+" = "+val for key,val in final.iteritems()])+'\n')
+        ffile.write('\n'.join([key+" = "+val for key,val in six.iteritems(final)])+'\n')
         ffile.write(queue+'\n')
 
 if __name__=="__main__":
