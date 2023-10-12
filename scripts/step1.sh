@@ -72,6 +72,7 @@ if [ -e ${CMSSWVER}.tar.gz ]; then
 		tar -xzf ${CMSSWVER}.tar.gz
 		cd ${CMSSWVER}
 		scram b ProjectRename
+		scram b ExternalLinks
 	fi
 else
 	scram project ${CMSSWVER}
