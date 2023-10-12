@@ -41,19 +41,25 @@ cd [CMSSW_VERSION]/src
 cmsenv
 git clone git@github.com:kpedro88/CondorProduction.git Condor/Production
 scram b
+$CMSSW_BASE/src/Condor/Production/scripts/postInstall.sh [options]
 ```
 
-For simplicity, in the typical case where the user is reusing any of the scripts and/or template files in the [scripts](./scripts)
-directory, go to the directory where jobs will be submitted and link to those scripts:
-```
-cd [job_dir]
-python $CMSSW_BASE/src/Condor/Production/python linkScripts.py
-```
-In case of a non-standard installation, the user can provide the source directory for the scripts using
-the `-d, --dir` argument to `linkScripts.py`. The list of scripts to be linked is set in the `.prodconfig` file (see [Configuration](#configuration)).
+The script [./scripts/postInstall.sh] handles common post-installation actions.
+It can be called at the end of the installation script for packages that use CondorProduction.
 
-If the job directory is tracked in git, one can add the symlinked file names to a `.gitignore` file in the directory
-to exclude them from the repository.
+Its options are:
+* `-d [dir]`: location of CondorProduction (default = `$CMSSW_BASE/src/Condor/Production`)
+* `-b [dir]`: batch directory for `linkScripts.py`
+* `-c`: run `cacheAll.py`
+* `-p`: (re)install python3 bindings for htcondor
+* `-h`: display help message and exit
+
+The actions it performs are:
+1. If `-b`  is provided, go to that directory and link to any scripts (list provided in the `.prodconfig` file (see [Configuration](#configuration)) that will be reused when submitting jobs.
+(If the job directory is tracked in git, one can add the symlinked file names to a `.gitignore` file in the directory to exclude them from the repository.)
+2. If `-c` is provided, call `cacheAll.py` to mark unneeded directories as excluded from the CMSSW tarball (see [CMSSW tarball creation](##cmssw-tarball-creation)).
+3. If `-p` is provided and python3 is available from CMSSW, the correct htcondor bindings for the system Condor will be installed.
+The CMSSW [virtualenv](http://cms-sw.github.io/venv.html) will be enabled if not already in use.
 
 ## Job submission
 
@@ -428,7 +434,7 @@ Limitation: if information for Python scripts used directly from this repository
 
 ## Dependencies
 
-This repository works with Python 2.7 and any modern version of bash (4+).
+This repository works with Python 2.7 or 3+ and any modern version of bash (4+).
 
 The missing mode of `jobSubmitter` uses the [Condor python bindings](https://htcondor-python.readthedocs.io/en/latest/htcondor_intro.html)
 to check the list of running jobs. It will try very hard to find the Condor python bindings, but if they are not available,
@@ -436,6 +442,8 @@ it will simply skip the check of running jobs.
 
 In contrast, `manageJobs` absolutely depends on the Condor python bindings. It will also try very hard to find them,
 but if they are not available, it cannot run.
+
+For Python 3 usage, the bindings can be installed by `postInstall.sh` (see [Installation](#installation)).
 
 For more information about global pool sites, see 
 [Selecting Sites - CMS Connect Handbook](https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
@@ -446,7 +454,7 @@ A very basic example can be found in the [test](./test) directory.
 
 Other repositories that use this package include:
 * [TreeMaker](https://github.com/TreeMaker/TreeMaker#submit-production-to-condor) - ntuple production
-* [SVJProduction](https://github.com/kpedro88/SVJProduction#condor-submission) - private signal production
+* [SVJProduction](https://github.com/cms-svj/SVJProduction#condor-submission) - private signal production
 * [SVJtagger](https://github.com/kpedro88/SVJtagger/tree/master/uBDT) - BDT training
 * [SimDenoising](https://github.com/kpedro88/SimDenoising#batch-submission) - simulated data generation
 * [SonicCMS](https://github.com/fastmachinelearning/SonicCMS/tree/v5.2.0/Brainwave) - ML inference

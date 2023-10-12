@@ -1,5 +1,5 @@
 [common]
-scripts = checkVomsTar.sh,jobExecCondor.jdl,jobExecCondor.sh,step1.sh,jobExecCondorChain.sh
+scripts = scripts/checkVomsTar.sh,scripts/jobExecCondor.jdl,scripts/jobExecCondor.sh,scripts/step1.sh,scripts/jobExecCondorChain.sh,python/manageJobs.py,python/createChain.py
 [collectors]
 fnal = cmssrv268.fnal.gov,cmssrv605.fnal.gov
 cmscon = login.uscms.org
@@ -8,5 +8,6 @@ fnal = lpcschedd3.fnal.gov,lpcschedd4.fnal.gov,lpcschedd5.fnal.gov
 cmscon = login-el7.uscms.org
 [caches]
 $CMSSW_BASE/tmp = 1
+$CMSSW_BASE/test = 1
 [manage]
 defaultredir = root://cmsxrootd.fnal.gov/

@@ -4,9 +4,10 @@ from optparse import OptionParser, OptionGroup
 from file_finder import find_input_file_site_per_job, fprint
 
 # try to find condor bindings
-for condorPath in ["/usr/lib64/python2.6/site-packages", "/usr/lib64/python2.7/site-packages"]:
-    if condorPath not in sys.path and os.path.isdir(condorPath):
-        sys.path.append(condorPath)
+if six.PY2:
+    for condorPath in glob.glob("/usr/lib64/python{}.*/site-packages".format(sys.version_info[0])):
+        if condorPath not in sys.path and os.path.isdir(condorPath):
+            sys.path.append(condorPath)
 import htcondor,classad
 
 from parseConfig import list_callback, parser_dict
