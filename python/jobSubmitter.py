@@ -3,7 +3,7 @@ import os, subprocess, sys, stat, glob, shutil, tarfile, six
 from optparse import OptionParser
 from collections import defaultdict, OrderedDict
 from datetime import datetime
-from parseConfig import list_callback, parser_dict
+from Condor.Production.parseConfig import list_callback, parser_dict
 
 def date_convert(value):
     return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")

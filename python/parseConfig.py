@@ -1,5 +1,8 @@
-import os, inspect
-from ConfigParser import SafeConfigParser
+import os, inspect, sys
+if sys.version_info >= (3, 2):
+    from six.moves.configparser import ConfigParser as SafeConfigParser
+else:
+    from six.moves.configparser import SafeConfigParser
 from collections import defaultdict
 
 def list_callback(option, opt, value, parser):
