@@ -60,5 +60,8 @@ if [ "$PIPINSTALL" = true ]; then
 		scram-venv
 		eval `scramv1 runtime -sh`
 	fi
-	pip3 install --upgrade htcondor==$(condor_version | head -n 1 | cut -d' ' -f2)
+	# version notes:
+	# 10.0.1 (current lpc system condor version) has ABI incompatibility w/ Python 3.9
+	# 10.7.0 deprecates Schedd.xquery, avoid need to work around that change
+	pip3 install --upgrade htcondor==10.6.0
 fi
