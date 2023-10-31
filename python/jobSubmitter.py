@@ -39,6 +39,7 @@ def pyxrdfsls(pfn, minDate=None, maxDate=None):
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            encoding="utf-8",
             # necessary to communicate w/ cmslpc at fnal
             env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
         ).communicate()[0].split('\n')
@@ -56,6 +57,7 @@ def pyxrdcp(a,b,verbose=True):
     xrdcp = subprocess.Popen(
         "xrdcp "+a+" "+b,
         shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        encoding="utf-8",
         env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
     )
     xrdcp_result = xrdcp.communicate()
