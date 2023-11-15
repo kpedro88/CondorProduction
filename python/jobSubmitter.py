@@ -32,16 +32,20 @@ def pyxrdfsls(pfn, minDate=None, maxDate=None):
     extra = " -l " if checkDates else ""
 
     # todo: replace w/ XRootD python bindings?
+    popen_args = dict(
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        # necessary to communicate w/ cmslpc at fnal
+        env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'}),
+    )
+    if six.PY3:
+        popen_args.update(dict(encoding="utf-8"))
     results = filter(
         None,
         subprocess.Popen(
             "xrdfs "+xrd+" ls "+extra+lfn,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding="utf-8",
-            # necessary to communicate w/ cmslpc at fnal
-            env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})
+            **popen_args
         ).communicate()[0].split('\n')
     )
 
