@@ -65,6 +65,10 @@ def generalized_ls(redir, indir, minDate=None, maxDate=None):
         ).communicate()[0].split('\n')
     )
 
+    # for consistency with xrdfs ls, which includes full lfn path (/store/...) in output
+    if not cmd.startswith("xrdfs"):
+        results = [lfn+'/'+res for res in results]
+
     if checkDates:
         dates = [date_convert(' '.join(line.split()[date_split_start:date_split_start+2])) for line in results]
         results = [line.split()[-1] for line,date in zip(results,dates) if (minDate is None or date>minDate) and (maxDate is None or date<maxDate)]
