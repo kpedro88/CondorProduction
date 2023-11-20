@@ -28,6 +28,10 @@ def generalized_ls(redir, indir, minDate=None, maxDate=None):
     checkDates = minDate is not None or maxDate is not None
     extra = " -l --full-time" if checkDates else ""
 
+    # automatically split
+    if len(indir)==0:
+        redir, indir = split_pfn(redir)
+
     cmd = None
     if indir.startswith("/store/"):
         if redir.startswith("root://"):
@@ -79,8 +83,7 @@ def split_pfn(pfn):
 
 # backward compatibility
 def pyxrdfsls(pfn, minDate=None, maxDate=None):
-    lfn, xrd = split_pfn(pfn)
-    return generalized_ls(xrd, lfn, minDate, maxDate)
+    return generalized_ls(pfn, "", minDate, maxDate)
 
 # run xrdcp
 def pyxrdcp(a,b,verbose=True):
@@ -454,7 +457,7 @@ class jobSubmitter(object):
         # find finished jobs via output file list
         filesSet = set()
         if hasattr(self,"output"):
-            files = generalized_ls(*split_pfn(self.output),self.minDate,self.maxDate)
+            files = generalized_ls(self.output,"",self.minDate,self.maxDate)
             # basename
             filesSet = set([ self.finishedToJobName(f) for f in files])
         return filesSet
