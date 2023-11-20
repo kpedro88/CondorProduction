@@ -24,36 +24,55 @@ def pysed(lines,out,patterns):
             outfile.write(linetmp)
 
 # run xrdfs ls using physical file name
-def pyxrdfsls(pfn, minDate=None, maxDate=None):
-    psplit = pfn.find("/store")
-    lfn = pfn[psplit:]
-    xrd = pfn[:psplit]
+def generalized_ls(redir, indir, minDate=None, maxDate=None):
     checkDates = minDate is not None or maxDate is not None
-    extra = " -l " if checkDates else ""
+    extra = " -l --full-time" if checkDates else ""
+
+    cmd = None
+    if indir.startswith("/store/"):
+        if redir.startswith("root://"):
+            date_split_start = 1
+            cmd = "xrdfs {} ls {} {}".format(redir,extra.replace("--full-time",""),indir)
+        elif redir.startswith("gsiftp://"):
+            date_split_start = 5
+            cmd = "gfal-ls {}".format(redir+indir)
+        else:
+            raise ValueError("Unknown redir {}".format(redir))
+    else:
+        date_split_start = 5
+        cmd = "ls {} {}".format(extra,indir)
 
     # todo: replace w/ XRootD python bindings?
     popen_args = dict(
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        # necessary to communicate w/ cmslpc at fnal
-        env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'}),
     )
+    if cmd.startswith("xrdfs"):
+        # necessary to communicate w/ cmslpc at fnal
+        popen_args.update(dict(env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})))
     if six.PY3:
         popen_args.update(dict(encoding="utf-8"))
     results = filter(
         None,
         subprocess.Popen(
-            "xrdfs "+xrd+" ls "+extra+lfn,
+            cmd,
             **popen_args
         ).communicate()[0].split('\n')
     )
 
     if checkDates:
-        dates = [date_convert(' '.join(line.split()[1:3])) for line in results]
+        dates = [date_convert(' '.join(line.split()[date_split_start:date_split_start+2])) for line in results]
         results = [line.split()[-1] for line,date in zip(results,dates) if (minDate is None or date>minDate) and (maxDate is None or date<maxDate)]
 
     return results
+
+# backward compatibility
+def pyxrdfsls(pfn, minDate=None, maxDate=None):
+    psplit = pfn.find("/store")
+    lfn = pfn[psplit:]
+    xrd = pfn[:psplit]
+	return generalized_ls(xrd, lfn, minDate, maxDate)
 
 # run xrdcp
 def pyxrdcp(a,b,verbose=True):
