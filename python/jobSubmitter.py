@@ -67,12 +67,20 @@ def generalized_ls(redir, indir, minDate=None, maxDate=None):
 
     return results
 
+def split_pfn(pfn):
+    if "://" in pfn:
+        psplit = pfn.find("/store")
+        lfn = pfn[psplit:]
+        xrd = pfn[:psplit]
+    else:
+        lfn = pfn
+        xrd = ""
+    return xrd, lfn
+
 # backward compatibility
 def pyxrdfsls(pfn, minDate=None, maxDate=None):
-    psplit = pfn.find("/store")
-    lfn = pfn[psplit:]
-    xrd = pfn[:psplit]
-	return generalized_ls(xrd, lfn, minDate, maxDate)
+    lfn, xrd = split_pfn(pfn)
+    return generalized_ls(xrd, lfn, minDate, maxDate)
 
 # run xrdcp
 def pyxrdcp(a,b,verbose=True):
@@ -446,7 +454,7 @@ class jobSubmitter(object):
         # find finished jobs via output file list
         filesSet = set()
         if hasattr(self,"output"):
-            files = pyxrdfsls(self.output,self.minDate,self.maxDate)
+            files = generalized_ls(*split_pfn(self.output),self.minDate,self.maxDate)
             # basename
             filesSet = set([ self.finishedToJobName(f) for f in files])
         return filesSet
