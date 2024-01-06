@@ -57,13 +57,13 @@ def generalized_ls(redir, indir, minDate=None, maxDate=None):
         popen_args.update(dict(env=dict(os.environ,**{'XrdSecGSISRVNAMES': 'cmseos.fnal.gov'})))
     if six.PY3:
         popen_args.update(dict(encoding="utf-8"))
-    results = filter(
+    results = list(filter(
         None,
         subprocess.Popen(
             cmd,
             **popen_args
         ).communicate()[0].split('\n')
-    )
+    ))
 
     # for consistency with xrdfs ls, which includes full lfn path (/store/...) in output
     if not cmd.startswith("xrdfs"):

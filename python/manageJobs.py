@@ -174,7 +174,7 @@ def resubmitJobs(jobs,options,scheddurl=""):
     # change sites if desired
     # takes site list from the first job
     if len(options.addsites)>0 or len(options.rmsites)>0:
-        sitelist = filter(None,jobs[0].sites.split(','))
+        sitelist = list(filter(None,jobs[0].sites.split(',')))
         for addsite in options.addsites:
             if not addsite in sitelist: sitelist.append(addsite)
         for rmsite in options.rmsites:
