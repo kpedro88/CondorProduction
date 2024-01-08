@@ -169,6 +169,7 @@ class jobSubmitter(object):
         self.njobs = 0
         self.filesSet = set()
         self.runSet = set()
+        self.missingNums = {}
         self.missingLines = []
 
     def run(self):
@@ -404,6 +405,25 @@ class jobSubmitter(object):
         else:
             print("Error: couldn't find "+job.jdl+", try running in prepare mode")
 
+    def editMissing(self,numlist,jdl,noQueueArg):
+        returnLines = []
+        if noQueueArg:
+            # get jdl lines for this job
+            with open(jdl,'r') as file:
+                jdlLines = [line for line in file]
+            # overwrite queue command in jdl
+            with open(jdl,'w') as file:
+                for line in jdlLines:
+                    if line.startswith("Queue"):
+                        file.write("#"+line)
+                        file.write("Queue Process in "+','.join(map(str,numlist))+"\n")
+                    else:
+                        file.write(line)
+            returnLines.append('condor_submit '+jdl)
+        else:
+            returnLines.append('condor_submit '+jdl+' -queue "Process in '+','.join(map(str,numlist))+'"')
+        return returnLines
+
     def doMissing(self,job):
         jobSet, jobDict = self.findJobs(job)
         # replace name if necessary
@@ -414,26 +434,13 @@ class jobSubmitter(object):
         # find difference
         diffSet = jobSet - self.filesSet - runSetTmp
         diffList = list(sorted(diffSet))
+        numlist = sorted([jobDict[j] for j in diffList])
         if len(diffList)>0:
             if len(self.resub)>0:
-                numlist = sorted([jobDict[j] for j in diffList])
-                if self.noQueueArg:
-                    # get jdl lines for this job
-                    with open(job.jdl,'r') as file:
-                        jdlLines = [line for line in file]
-                    # overwrite queue command in jdl
-                    with open(job.jdl,'w') as file:
-                        for line in jdlLines:
-                            if line.startswith("Queue"):
-                                file.write("#"+line)
-                                file.write("Queue Process in "+','.join(map(str,numlist))+"\n")
-                            else:
-                                file.write(line)
-                    self.missingLines.append('condor_submit '+job.jdl)
-                else:
-                    self.missingLines.append('condor_submit '+job.jdl+' -queue "Process in '+','.join(map(str,numlist))+'"')
+                self.missingLines.extend(self.editMissing(numlist,job.jdl,self.noQueueArg))
             else:
                 self.missingLines.extend(diffList)
+            self.missingNums[job.jdl] = numlist
 
     def findJobs(self,job):
         jobSet = set()
@@ -448,7 +455,7 @@ class jobSubmitter(object):
         # provide results
         if len(self.missingLines)>0:
             if len(self.resub)>0:
-                self.makeResubmit()
+                self.makeResubmit(self.resub, self.missingLines)
             else:
                 print('\n'.join(self.missingLines))
         else:
@@ -515,10 +522,10 @@ class jobSubmitter(object):
 
         return runSet
 
-    def makeResubmit(self):
-        with open(self.resub,'w') as rfile:
+    def makeResubmit(self, resub, missingLines):
+        with open(resub,'w') as rfile:
             rfile.write("#!/bin/bash\n\n")
-            for stmp in self.missingLines:
+            for stmp in missingLines:
                 rfile.write(stmp+'\n')
         # make executable
         st = os.stat(rfile.name)
