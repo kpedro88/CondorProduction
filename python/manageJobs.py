@@ -86,6 +86,7 @@ def getJobs(options, scheddurl=""):
     elif options.idle: constraint += ' && JobStatus==1'
 
     schedd = getSchedd(scheddurl,options.coll)
+    if schedd is None: return []
 
     # get info for selected jobs
     jobs = []
@@ -102,7 +103,7 @@ def getJobs(options, scheddurl=""):
 
 def printJobs(jobs, num=False, prog=False, stdout=False, why=False, matched=False):
     if len(jobs)==0: return
-    
+
     print("\n".join([
         (j.stdout if stdout else j.name)+
         (" ("+j.num+")" if num else "")+
@@ -189,7 +190,7 @@ def resubmitJobs(jobs,options,scheddurl=""):
 
 def manageJobs(argv=None):
     if argv is None: argv = sys.argv[1:]
-    
+
     parser = OptionParser(add_help_option=False)
     parser.add_option("-c", "--coll", dest="coll", default="", help="view jobs from this collector (default = %default)")
     parser.add_option("-u", "--user", dest="user", default=parser_dict["common"]["user"], help="view jobs from this user (submitter) (default = %default)")
@@ -272,7 +273,7 @@ def manageJobs(argv=None):
         options.resubmit = False
         options.kill = False
         options.xrootdResubmit = False
-        
+
     if options.all: all_nodes = parser_dict["schedds"]["fnal"].split(',')
     else: all_nodes = [""]
     for sch in all_nodes:
