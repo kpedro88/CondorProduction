@@ -22,7 +22,11 @@ def uncacheOne(dir,filepath):
 
 def cacheAll():
     for dir,val in six.iteritems(parser_dict['caches']):
-        filepath = os.path.join(os.path.expandvars(dir),'CACHEDIR.TAG')
+        edir = os.path.expandvars(dir)
+        if not os.path.isdir(edir):
+            print("Skipping nonexistent "+dir)
+            continue
+        filepath = os.path.join(edir,'CACHEDIR.TAG')
         if val=='1':
             cacheOne(dir,filepath)
         elif val=='0':
