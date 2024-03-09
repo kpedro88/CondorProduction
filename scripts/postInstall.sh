@@ -21,8 +21,8 @@ usage() {
 	$ECHO
 	$ECHO "-d [dir]    \tlocation of CondorProduction (default = $CPDIR)"
 	$ECHO "-b [dir]    \tbatch directory for linkScripts.py"
-	$ECHO "-c          \trun cacheAll.py"
 	$ECHO "-p          \t(re)install python3 bindings for htcondor"
+	$ECHO "-c          \trun cacheAll.py"
 	$ECHO "-h          \tdisplay this help message and exit"
 	exit $1
 }
@@ -46,10 +46,6 @@ if [ -n "$BATCHDIR" ]; then
 	(cd $BATCHDIR && $PYTHON $CPDIR/python/linkScripts.py -d $CPDIR)
 fi
 
-if [ "$CACHEALL" = true ]; then
-	$PYTHON $CPDIR/python/cacheAll.py
-fi
-
 if [ "$PIPINSTALL" = true ]; then
 	if [ "$PYTHON" != python3 ]; then
 		echo "pip install not available for python2"
@@ -64,4 +60,8 @@ if [ "$PIPINSTALL" = true ]; then
 	# 10.0.1 (current lpc system condor version) has ABI incompatibility w/ Python 3.9
 	# 10.7.0 deprecates Schedd.xquery, avoid need to work around that change
 	pip3 install --upgrade htcondor==10.6.0
+fi
+
+if [ "$CACHEALL" = true ]; then
+	$PYTHON $CPDIR/python/cacheAll.py
 fi
