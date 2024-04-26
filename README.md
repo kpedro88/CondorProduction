@@ -338,6 +338,7 @@ It uses a number of command line options to specify how to display job informati
 * `-m, --matched`: show site and machine to which the job matched (for CMS Connect)
 * `-p, --progress`: show job progress (time and nevents)
 * `-X, --xrootd-resubmit`: resubmit the jobs based on where the input files are located
+* `-B BLACKLISTEDSITES, --blacklist-sites=BLACKLISTEDSITES`: comma-separated list of global pool sites to reject
 * `-C INPUTFILECLASSAD, --input-file-classad=INPUTFILECLASSAD`: HTCondor ClassAd which contains the input file(s) being used within the job (used in combination with `-X`)
 * `-D, --dry-run`: don't actually resubmit any jobs (used in combination with `-X`)
 * `-K LOGKEY, --log_key=LOGKEY`: key to use to find the correct line(s) in the log file (used in combination with `-X`)
@@ -355,7 +356,7 @@ at the LPC (where each interactive node has its own scheduler). The script can s
 on that node (because each scheduler can only be accessed for write operations from its respective node).
 
 The option `-X` will resubmit the jobs (just like `-s`), except that it will tell the job to get its input file from a specific site based on the list of sites where that file
-is located and some user preferences. Therefore, the options `-X` and `-s` are exclusive, as are the options `-X` and `-k`. The options `-C`, `-D`, `-K`, `-L`, `-U`, and `-V`
+is located and some user preferences. Therefore, the options `-X` and `-s` are exclusive, as are the options `-X` and `-k`. The options `-B`, `-C`, `-D`, `-K`, `-L`, `-U`, and `-V`
 are only applicable when using the option `-X`. There are two ways in which the program can find the appropriate input file(s) for the job:
 1. specify an HTCondor ClassAd name, where the ClassAd contains a comma-separated list of files (`-C`).
 2. specify the location of a set of log files and a key with which to parse the log files (`-L`/`-K`). It is expected that the log will contain a single line with a comma-separated list of files.

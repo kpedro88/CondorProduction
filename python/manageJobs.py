@@ -220,7 +220,6 @@ def manageJobs(argv=None):
     group.add_option("-D", "--dry-run", dest="dryRun", default=False, action="store_true", help="don't actually resubmit any jobs (default = %default)")
     group.add_option("-K", "--log_key", dest="logKey", default = "", type="string", help="key to use to find the correct line(s) in the log file (default = %default)")
     group.add_option("-L", "--log_path", dest="logPath", default = os.environ["PWD"], type="string", help = "path to the job logs (default = %default)")
-    group.add_option("-O", "--xrootd-resubmit-options-other", dest="xrootdResubmitOptionsOther", default="", type="string", help = "other options to supply to file_finder_resubmitter.py (default = %default)")
     group.add_option("-U", "--prefer-us-sites", dest="preferUSSites", action = "store_true", default = False, help = "prefer reading inputs from US sites over others (default = %default)")
     group.add_option("-V", "--verbose", dest="verbose", action = "store_true", default = False, help = "be more verbose when printing out the resubmission information for each job (default = %default)")
     parser.add_option_group(group)
