@@ -105,6 +105,15 @@ def pyxrdcp(a,b,verbose=True):
         print(xrdcp_result[1])
     return rc
 
+# get regex capture group from file
+def match(pattern,fname):
+    import re
+    with open(fname,'r') as file:
+        result = re.search(pattern,file.read())
+        if result is not None and len(result.groups())>0:
+            return result.group(1)
+    return None
+
 class protoJob(object):
     def __init__(self):
         self.patterns = OrderedDict()
@@ -348,8 +357,9 @@ class jobSubmitter(object):
 
     def generateExtra(self,job):
         is_cms_connect = os.uname()[1]=="login.uscms.org" or os.uname()[1]=="login-el7.uscms.org"
+        os_version = match("[^0-9]*([0-9]+).*","/etc/redhat-release")
         job.patterns.update([
-            ("OSVERSION","rhel7" if "el7" in os.uname()[2] else "rhel6"),
+            ("OSVERSION","rhel"+os_version),
             ("MYDISK",self.disk),
             ("MYMEMORY",self.memory),
             ("MYCPUS",self.cpus),
