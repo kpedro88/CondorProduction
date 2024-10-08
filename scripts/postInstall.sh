@@ -59,7 +59,7 @@ if [ "$PIPINSTALL" = true ]; then
 	# version notes:
 	# 10.0.1 (current lpc system condor version) has ABI incompatibility w/ Python 3.9
 	# 10.7.0 deprecates Schedd.xquery, avoid need to work around that change
-	pip3 install --upgrade htcondor==10.6.0
+	pip3 install --upgrade htcondor==10.0.9
 fi
 
 if [ "$CACHEALL" = true ]; then
