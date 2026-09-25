@@ -15,6 +15,7 @@ CPDIR=$CMSSW_BASE/src/Condor/Production
 BATCHDIR=""
 CACHEALL=""
 PIPINSTALL=""
+BVERSION=10.0.9
 usage() {
 	ECHO="echo -e"
 	$ECHO "postInstall.sh [options]"
@@ -22,12 +23,13 @@ usage() {
 	$ECHO "-d [dir]    \tlocation of CondorProduction (default = $CPDIR)"
 	$ECHO "-b [dir]    \tbatch directory for linkScripts.py"
 	$ECHO "-p          \t(re)install python3 bindings for htcondor"
+	$ECHO "-v          \tversion of htcondor python3 bindings (default = $BVERSION)"
 	$ECHO "-c          \trun cacheAll.py"
 	$ECHO "-h          \tdisplay this help message and exit"
 	exit $1
 }
 # check arguments
-while getopts "d:b:cph" opt; do
+while getopts "d:b:cpv:h" opt; do
 	case "$opt" in
 		d) CPDIR=$OPTARG
 		;;
@@ -36,6 +38,8 @@ while getopts "d:b:cph" opt; do
 		c) CACHEALL=true
 		;;
 		p) PIPINSTALL=true
+		;;
+		v) BVERSION=$OPTARG
 		;;
 		h) usage 0
 		;;
@@ -57,9 +61,8 @@ if [ "$PIPINSTALL" = true ]; then
 		eval `scramv1 runtime -sh`
 	fi
 	# version notes:
-	# 10.0.1 (current lpc system condor version) has ABI incompatibility w/ Python 3.9
-	# 10.7.0 deprecates Schedd.xquery, avoid need to work around that change
-	pip3 install --upgrade htcondor==10.0.9
+	# 10.0.9 works through Python 3.11
+	pip3 install --upgrade htcondor==$BVERSION
 fi
 
 if [ "$CACHEALL" = true ]; then
