@@ -15,7 +15,7 @@ CPDIR=$CMSSW_BASE/src/Condor/Production
 BATCHDIR=""
 CACHEALL=""
 PIPINSTALL=""
-BVERSION=10.0.9
+BVERSION=25.14.1
 usage() {
 	ECHO="echo -e"
 	$ECHO "postInstall.sh [options]"
@@ -62,6 +62,7 @@ if [ "$PIPINSTALL" = true ]; then
 	fi
 	# version notes:
 	# 10.0.9 works through Python 3.11
+	# 10.9.0.post1 needed for Python 3.12
 	pip3 install --upgrade htcondor==$BVERSION
 fi
 
