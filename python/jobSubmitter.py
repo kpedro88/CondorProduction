@@ -485,17 +485,19 @@ class jobSubmitter(object):
 
     def tryToGetCondor(self):
         # try to find condor bindings
-        if six.PY2:
-            for condorPath in glob.glob("/usr/lib64/python{}.*/site-packages".format(sys.version_info[0])):
-                if condorPath not in sys.path and os.path.isdir(condorPath):
-                    sys.path.append(condorPath)
+        for condorPath in glob.glob("/usr/lib64/python{}.*/site-packages".format(sys.version_info[0])):
+            if condorPath not in sys.path and os.path.isdir(condorPath):
+                sys.path.append(condorPath)
         # try to import condor bindings
         try:
             global htcondor,classad
-            import htcondor,classad
-        except:
-            print('Could not import htcondor bindings!')
-            return False
+            import htcondor2 as htcondor, classad2 as classad
+        except ImportError:
+            try:
+                import htcondor, classad
+            except ImportError:
+                print("Could not import htcondor bindings!")
+                return False
         return True
 
     def runningToJobName(self,val):
@@ -525,7 +527,7 @@ class jobSubmitter(object):
                 try:
                     scheddAd = coll.locate(htcondor.DaemonTypes.Schedd, sch)
                     schedd = htcondor.Schedd(scheddAd)
-                    for result in schedd.xquery(constraint,["Out"]):
+                    for result in schedd.query(constraint,["Out"]):
                         runSet.add(self.runningToJobName(result["Out"]))
                 except:
                     print("Warning: could not locate schedd "+sch)

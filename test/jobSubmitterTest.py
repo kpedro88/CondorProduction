@@ -31,7 +31,7 @@ class jobSubmitterTest(jobSubmitter):
         job.name = self.name
         self.generatePerJob(job)
 
-        for iJob in xrange(self.nParts):
+        for iJob in range(self.nParts):
             job.njobs += 1
             job.nums.append(iJob)
 

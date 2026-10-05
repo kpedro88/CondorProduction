@@ -4,11 +4,17 @@ from optparse import OptionParser, OptionGroup
 from file_finder import find_input_file_site_per_job, fprint
 
 # try to find condor bindings
-if six.PY2:
-    for condorPath in glob.glob("/usr/lib64/python{}.*/site-packages".format(sys.version_info[0])):
-        if condorPath not in sys.path and os.path.isdir(condorPath):
-            sys.path.append(condorPath)
-import htcondor,classad
+for condorPath in glob.glob("/usr/lib64/python{}.*/site-packages".format(sys.version_info[0])):
+    if condorPath not in sys.path and os.path.isdir(condorPath):
+        sys.path.append(condorPath)
+
+try:
+    import htcondor2 as htcondor, classad2 as classad
+except ImportError:
+    try:
+        import htcondor, classad
+    except ImportError:
+        raise RuntimeError("Could not find htcondor, classad bindings")
 
 from parseConfig import list_callback, parser_dict
 
@@ -43,7 +49,7 @@ class CondorJob(object):
 def getJob(options,result,jobs,scheddurl=""):
     # check greps
     checkstring = result["Out"]
-    if "HoldReason" in result.keys(): checkstring += " "+result["HoldReason"]
+    if "HoldReason" in result.keys() and isinstance(result["HoldReason"], str): checkstring += " "+result["HoldReason"]
     gfound = False
     for gcheck in options.grep:
         if gcheck in checkstring:
@@ -97,7 +103,7 @@ def getJobs(options, scheddurl=""):
         for result in schedd.history(constraint,props,options.finished):
             getJob(options,result,jobs,scheddurl)
     else:
-        for result in schedd.xquery(constraint,props):
+        for result in schedd.query(constraint,props):
             getJob(options,result,jobs,scheddurl)
     return jobs
 
