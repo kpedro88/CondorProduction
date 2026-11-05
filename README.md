@@ -44,7 +44,7 @@ scram b
 $CMSSW_BASE/src/Condor/Production/scripts/postInstall.sh [options]
 ```
 
-The script [./scripts/postInstall.sh] handles common post-installation actions.
+The script [postInstall.sh](./scripts/postInstall.sh) handles common post-installation actions.
 It can be called at the end of the installation script for packages that use CondorProduction.
 
 Its options are:
@@ -446,8 +446,10 @@ but if they are not available, it cannot run.
 
 For Python 3 usage, the bindings can be installed by `postInstall.sh` (see [Installation](#installation)).
 
+The code is intended to work with both old and new (HTCondor 25+) versions of the bindings.
+
 For more information about global pool sites, see 
-[Selecting Sites - CMS Connect Handbook](https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
+[Selecting Sites - CMS Connect Handbook](https://web.archive.org/web/20220814012748/https://ci-connect.atlassian.net/wiki/spaces/CMS/pages/22609953/Selecting+Sites).
 
 ## Examples
 
