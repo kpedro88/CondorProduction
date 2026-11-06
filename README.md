@@ -3,7 +3,7 @@
 A general, extensible set of Python and Bash scripts to submit any job to the [HTCondor](https://research.cs.wisc.edu/htcondor/) batch system.
 
 This package focuses on the use of Condor with [CMSSW](http://cms-sw.github.io/) via the [LPC](https://lpc.fnal.gov/computing/index.shtml)
-or [CMS Connect](https://connect.uscms.org/).
+or [CMS Connect](https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookCMSConnect#Sign_up_to_CMS_Connect).
 
 Currently in an alpha state of development; caveat emptor.
 
